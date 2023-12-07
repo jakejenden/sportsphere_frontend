@@ -2,16 +2,17 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import axios from 'axios';
 import { Form, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 interface FormData {
-  usernameOrEmail: string;
-  password: string;
+  Username: string;
+  Password: string;
 }
 
 const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
-    usernameOrEmail: '',
-    password: '',
+    Username: '',
+    Password: '',
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -48,23 +49,23 @@ const LoginPage: React.FC = () => {
     <div className="dark-background text-center" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
       <h2 className="text-white mb-4">Login</h2>
       <Form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '350px' }}>
-        <Form.Group controlId="usernameOrEmail" className="mb-3">
+        <Form.Group controlId="Username" className="mb-3">
           <Form.Label className="text-white">Username/Email:</Form.Label>
           <Form.Control
             type="text"
-            name="usernameOrEmail"
-            value={formData.usernameOrEmail}
+            name="Username"
+            value={formData.Username}
             onChange={handleChange}
             required
           />
         </Form.Group>
 
-        <Form.Group controlId="password" className="mb-3">
+        <Form.Group controlId="Password" className="mb-3">
           <Form.Label className="text-white">Password:</Form.Label>
           <Form.Control
-            type="password"
-            name="password"
-            value={formData.password}
+            type="Password"
+            name="Password"
+            value={formData.Password}
             onChange={handleChange}
             required
           />
@@ -72,7 +73,11 @@ const LoginPage: React.FC = () => {
 
         <Button variant="primary" type="submit">
           Login
-        </Button>
+        </Button><br /><br />
+
+        <Link to="/create-user" className="btn btn-secondary mt-2"  style={{ fontSize: '10px', padding: '3px' }}>
+          Create User
+        </Link>
       </Form>
     </div>
   );
