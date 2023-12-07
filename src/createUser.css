@@ -1,0 +1,14 @@
+.dark-background {
+    background-color: #343a40; /* Dark grey background color */
+    padding: 20px; /* Add some padding */
+}
+
+.text-white {
+    color: white; /* White text color */
+}
+
+.space-out {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+  
