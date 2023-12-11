@@ -3,6 +3,7 @@ import React, { useState, ChangeEvent, FormEvent } from 'react';
 import axios from 'axios';
 import { Form, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface FormData {
   Username: string;
@@ -10,6 +11,7 @@ interface FormData {
 }
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate(); // Access the history object
   const [formData, setFormData] = useState<FormData>({
     Username: '',
     Password: '',
@@ -27,15 +29,20 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await axios.post('http://localhost:3030/login', formData);
+      console.log('Response Data:', response.data);
 
       // Assuming the backend returns a token upon successful login
-      const token = response.data.token;
+      const token = response.data;
 
       // You can store the token in local storage or a state management solution
       // Example: localStorage.setItem('token', token);
+      localStorage.setItem('token', token.trim())
 
-      alert('Login successful!');
-      // Redirect the user or perform other actions after successful login
+      // Handle success, e.g., show a success message or redirect to another page
+      console.log('User logged in successfully', response.data);
+
+      // Redirect to the login page
+      navigate('/return-results');
     } catch (error) {
       const errorMessage = (error as Error).message;
 
