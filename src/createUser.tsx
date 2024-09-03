@@ -5,9 +5,11 @@ import axios from 'axios';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from './config';
 import './createUser.css'; // Import the custom CSS file for styling
 
 const CreateUser: React.FC = () => {
+  const apiURL = `${API_URL}/createuser`
   const navigate = useNavigate(); // Access the history object
   const [formData, setFormData] = useState({
     username: '',
@@ -35,7 +37,7 @@ const CreateUser: React.FC = () => {
     }
   
     try {
-      const response = await axios.post("http://localhost:3030/createuser", formData, {
+      const response = await axios.post(apiURL, formData, {
         headers: {
           'Content-Type': 'application/json',
         },

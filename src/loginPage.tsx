@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Form, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from './config';
 
 interface FormData {
   Username: string;
@@ -11,6 +12,7 @@ interface FormData {
 }
 
 const LoginPage: React.FC = () => {
+  const apiURL = `${API_URL}/login`//'http://localhost:3030/login'
   const navigate = useNavigate(); // Access the history object
   const [formData, setFormData] = useState<FormData>({
     Username: '',
@@ -28,7 +30,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3030/login', formData);
+      const response = await axios.post(apiURL, formData);
       console.log('Response Data:', response.data);
 
       // Assuming the backend returns a token upon successful login
