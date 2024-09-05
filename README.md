@@ -44,3 +44,7 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+# Installation
+
+Windows installation involves installing choco by installing the package in administrator mode Powershell following the following instructions. You can use choco package manager to install node.js on Windows as seen here: https://nodejs.org/en/download/package-manager. Check the installation is successful by checking npm (package manager version) vpm -v and node -v. Download react using the following command: npm install react react-dom. Then install TypeScript with `npm install --save-dev typescript` and then install the react types with `npm install --save-dev @types/react @types/react-dom`. Finally initialise with the command: `npx tsc --init`. Also a requirement on Windows is to install cross-env: `npm install --save-dev cross-env` and then prefix the start script with package.json `cross-env`.
