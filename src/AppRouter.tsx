@@ -4,7 +4,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import CreateUser from './createUser';
 import LoginPage from './loginPage'; // Import your login page component
-import MovieSearchPage from './movieSearchPage';
+import EventSearchPage from './eventSearchPage';
 
 const AppRouter: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const AppRouter: React.FC = () => {
       <Routes>
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/return-results" element={<MovieSearchPage />} />
+        <Route path="/return-results" element={<EventSearchPage />} />
         {/* Add other routes as needed */}
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
