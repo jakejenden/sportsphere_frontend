@@ -34,8 +34,28 @@ const EventSearchPage: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Loading state
   const [location, setLocation] = useState<string>('');
+  const [sortOption, setSortOption] = useState<string>('');
   const [favourites, setFavourites] = useState<Favourite[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const navigate = useNavigate();
+
+  // Calculate the index of the first and last item of the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  const sortEventResults = (results: EventResult[]) => {
+      switch (sortOption) {
+          case 'alphabetical-asc':
+              return results.sort((a, b) => a.Name.localeCompare(b.Name));
+          case 'alphabetical-desc':
+            return results.sort((a, b) => b.Name.localeCompare(a.Name));
+          case 'date-desc':
+              return results.sort((a, b) => new Date(b.EventDate).getTime() - new Date(a.EventDate).getTime());
+          default:
+              return results;
+      }
+  };
 
   useEffect(() => {
     const checkToken = async () => {
@@ -52,31 +72,65 @@ const EventSearchPage: React.FC = () => {
     checkToken();
   }, [navigate]);
 
-  const handleSearch = async () => {
-      try {
-          document.cookie = `token=${token}; path=/`;
+  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    try {
+        document.cookie = `token=${token}; path=/`;
 
-          const response = await axios.get<EventResult[]>(`http://localhost:3030/returnresults?title=${searchTerm}`, {
-              withCredentials: true,
-          });
+        const response = await axios.get<EventResult[]>(`http://localhost:3030/returnresults?title=${searchTerm}`, {
+            withCredentials: true,
+        });
 
-          const fetchedResults: EventResult[] = response.data.map((item: any) => ({
-              ...item,
-              EventDate: new Date(item.EventDate),
-              isFavourited: isFavourite(item.Id) // Initialize isFavourited
-          }));
+        const favResponse = await axios.get<Favourite[]>('http://localhost:3030/getfavourites', {
+          withCredentials: true,
+        });
 
-          setEventResults(fetchedResults);
-      } catch (error) {
-          console.error('Error fetching event data:', error);
-      }
+        if (favResponse.data) {
+            setFavourites(favResponse.data);
+            const favSet = new Set(favResponse.data.map(fav => fav.EventId));
+        } else {
+            setFavourites([]); // Set an empty array or handle the situation as needed
+        }
+
+        const fetchedResults: EventResult[] = response.data
+        .map((item: any) => ({
+            ...item,
+            EventDate: new Date(item.EventDate),
+            isFavourited: isFavourite(item.Id) // Initialize isFavourited
+        }));
+
+        const sortedResults = sortEventResults(fetchedResults);
+
+        setEventResults(sortedResults);
+        setCurrentPage(1);
+    } catch (error) {
+        console.error('Error fetching event data:', error);
+    }
   };
 
+  const currentItems = eventResults.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(eventResults.length / itemsPerPage);
+
   useEffect(() => {
-    if (searchTerm) {
-      handleSearch();
-    }
-  }, [searchTerm]); // Fetch results whenever `searchTerm` changes
+      if (eventResults.length > 0) {
+          const sortedResults = sortEventResults([...eventResults]);
+          setEventResults(sortedResults);
+      }
+  }, [sortOption]);
+
+  // useEffect(() => {
+  //   const delayDebounceFn = setTimeout(() => {
+  //     if (searchTerm) {
+  //       handleSearch(); // Call handleSearch without event
+  //     }
+  //   }, 300); // Adjust the debounce delay as needed
+  
+  //   // Cleanup function to clear the timeout if searchTerm changes or component unmounts
+  //   return () => clearTimeout(delayDebounceFn);
+  // }, [searchTerm]); // Only re-run the effect if searchTerm changes  
+  
+  //   return () => clearTimeout(delayDebounceFn);
+  // }, [searchTerm]); 
 
   const handleLogout = async () => {
     try {
@@ -90,6 +144,10 @@ const EventSearchPage: React.FC = () => {
     } catch (error) {
       console.error('Error logging out:', error);
     }
+  };
+
+  const handleRedirect = (eventId: number) => {
+    navigate(`/event/${eventId}`);
   };
 
   useEffect(() => {
@@ -110,6 +168,9 @@ const EventSearchPage: React.FC = () => {
   }, []);
 
   const isFavourite = (eventId: number): boolean => {
+    if (!favourites) {
+        return false;
+    }
     console.log("isFavourite favourites: ", favourites)
     console.log("isFavourite eventId: ", eventId)
       return favourites.some(favourite => favourite.EventId === eventId);
@@ -233,16 +294,16 @@ const EventSearchPage: React.FC = () => {
                                 <div className="result-header">
                                     <div className="row">
                                         <div className="col-lg-6">
-                                            <div className="records">Showing: <b>1-20</b> of <b>200</b> result</div>
+                                            <div className="records">Showing: <b>{indexOfFirstItem + 1}-{indexOfLastItem}</b> of <b>{eventResults.length}</b> result</div>
                                         </div>
                                         <div className="col-lg-6">
                                             <div className="result-actions">
                                                 <div className="result-sorting">
                                                     <span>Sort By:</span>
-                                                    <select className="form-control border-0" id="exampleOption">
-                                                        <option value="1">Relevance</option>
-                                                        <option value="2">Names (A-Z)</option>
-                                                        <option value="3">Names (Z-A)</option>
+                                                    <select className="form-control border-0" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                                                        <option value="date-desc">Date</option>
+                                                        <option value="alphabetical-asc">Names (A-Z)</option>
+                                                        <option value="alphabetical-desc">Names (Z-A)</option>
                                                     </select>
                                                 </div>
                                                 <div className="result-views">
@@ -295,11 +356,11 @@ const EventSearchPage: React.FC = () => {
                                     <div className="table-responsive">
                                         <table className="table widget-26">
                                             <tbody>
-                                              {eventResults.map((result, index) => (
+                                              {currentItems.length > 0 && currentItems.map((result, index) => (
                                                   <tr key={index}>
                                                       <td>
                                                           <div className="widget-26-job-title">
-                                                              <a href="#">{result.Name}</a>
+                                                              <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
                                                               <p className="m-0">{result.EventDate.toLocaleDateString()}</p>
                                                           </div>
                                                       </td>
@@ -351,25 +412,26 @@ const EventSearchPage: React.FC = () => {
                         </div>
                     </div>
                     <nav className="d-flex justify-content-center">
-                        <ul className="pagination pagination-base pagination-boxed pagination-square mb-0">
-                            <li className="page-item">
-                                <a className="page-link no-border" href="#">
-                                    <span aria-hidden="true">«</span>
-                                    <span className="sr-only">Previous</span>
-                                </a>
-                            </li>
-                            <li className="page-item active"><a className="page-link no-border" href="#">1</a></li>
-                            <li className="page-item"><a className="page-link no-border" href="#">2</a></li>
-                            <li className="page-item"><a className="page-link no-border" href="#">3</a></li>
-                            <li className="page-item"><a className="page-link no-border" href="#">4</a></li>
-                            <li className="page-item">
-                                <a className="page-link no-border" href="#">
-                                    <span aria-hidden="true">»</span>
-                                    <span className="sr-only">Next</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
+                      <ul className="pagination pagination-base pagination-boxed pagination-square mb-0">
+                          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                              <button className="page-link no-border" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                                  «
+                              </button>
+                          </li>
+                          {Array.from({ length: totalPages }, (_, index) => (
+                              <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                                  <button className="page-link no-border" onClick={() => setCurrentPage(index + 1)}>
+                                      {index + 1}
+                                  </button>
+                              </li>
+                          ))}
+                          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                              <button className="page-link no-border" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                                  »
+                              </button>
+                          </li>
+                      </ul>
+                  </nav>
                 </div>
             </div>
         </div>
