@@ -35,6 +35,7 @@ const EventSearchPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true); // Loading state
   const [location, setLocation] = useState<string>('');
   const [sortOption, setSortOption] = useState<string>('');
+  const [viewMode, setViewMode] = useState('list');
   const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -117,6 +118,14 @@ const EventSearchPage: React.FC = () => {
           setEventResults(sortedResults);
       }
   }, [sortOption]);
+
+  const handleListView = () => {
+      setViewMode('list');
+  };
+
+  const handleGridView = () => {
+      setViewMode('grid');
+  };
 
   // useEffect(() => {
   //   const delayDebounceFn = setTimeout(() => {
@@ -307,7 +316,7 @@ const EventSearchPage: React.FC = () => {
                                                     </select>
                                                 </div>
                                                 <div className="result-views">
-                                                    <button type="button" className="btn btn-soft-base btn-icon">
+                                                    <button type="button" className="btn btn-soft-base btn-icon" onClick={handleListView}>
                                                         <svg
                                                             xmlns="http://www.w3.org/2000/svg"
                                                             width="24"
@@ -328,7 +337,7 @@ const EventSearchPage: React.FC = () => {
                                                             <line x1="3" y1="18" x2="3" y2="18"></line>
                                                         </svg>
                                                     </button>
-                                                    <button type="button" className="btn btn-soft-base btn-icon">
+                                                    <button type="button" className="btn btn-soft-base btn-icon" onClick={handleGridView}>
                                                         <svg
                                                             xmlns="http://www.w3.org/2000/svg"
                                                             width="24"
@@ -353,60 +362,108 @@ const EventSearchPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="result-body">
-                                    <div className="table-responsive">
-                                        <table className="table widget-26">
-                                            <tbody>
-                                              {currentItems.length > 0 && currentItems.map((result, index) => (
-                                                  <tr key={index}>
-                                                      <td>
-                                                          <div className="widget-26-job-title">
-                                                              <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
-                                                              <p className="m-0">{result.EventDate.toLocaleDateString()}</p>
-                                                          </div>
-                                                      </td>
-                                                      <td>
-                                                          <div className="widget-26-job-info">
-                                                              <p className="type m-0">{result.City}</p>
-                                                          </div>
-                                                      </td>
-                                                      <td>
-                                                          <div className="widget-26-job-salary">{result.EventOrganiser}</div>
-                                                      </td>
-                                                      <td>
-                                                          <div className="widget-26-job-category bg-soft-base">
-                                                              <i className="indicator bg-base"></i>
-                                                              <span>{result.EventType}</span>
-                                                          </div>
-                                                      </td>
-                                                      <td>
-                                                          <div className="widget-26-job-starred">
-                                                              <a 
-                                                                  href="#" 
-                                                                  className={result.isFavourited ? 'star active' : 'star'} 
-                                                                  onClick={(event) => handleStarClick(result.Id, result.Name, event)}
-                                                              >
-                                                                  <svg
-                                                                      xmlns="http://www.w3.org/2000/svg"
-                                                                      width="24"
-                                                                      height="24"
-                                                                      viewBox="0 0 24 24"
-                                                                      fill="none"
-                                                                      stroke="currentColor"
-                                                                      strokeWidth="2"
-                                                                      strokeLinecap="round"
-                                                                      strokeLinejoin="round"
-                                                                      className="feather feather-star"
-                                                                  >
-                                                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                  </svg>
-                                                              </a>
-                                                          </div>
-                                                      </td>
-                                                  </tr>
-                                              ))}
-                                          </tbody>
-                                        </table>
-                                    </div>
+                                  {viewMode === 'list' ? (
+                                        // List (Table) View
+                                        <div className="table-responsive">
+                                            <table className="table widget-26">
+                                                <tbody>
+                                                    {currentItems.length > 0 &&
+                                                        currentItems.map((result, index) => (
+                                                            <tr key={index}>
+                                                                <td>
+                                                                    <div className="widget-26-job-title">
+                                                                        <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
+                                                                        <p className="m-0">{result.EventDate.toLocaleDateString()}</p>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="widget-26-job-info">
+                                                                        <p className="type m-0">{result.City}</p>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="widget-26-job-salary">{result.EventOrganiser}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="widget-26-job-category bg-soft-base">
+                                                                        <i className="indicator bg-base"></i>
+                                                                        <span>{result.EventType}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="widget-26-job-starred">
+                                                                        <a
+                                                                            href="#"
+                                                                            className={result.isFavourited ? 'star active' : 'star'}
+                                                                            onClick={(event) => handleStarClick(result.Id, result.Name, event)}
+                                                                        >
+                                                                            <svg
+                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                width="24"
+                                                                                height="24"
+                                                                                viewBox="0 0 24 24"
+                                                                                fill="none"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="2"
+                                                                                strokeLinecap="round"
+                                                                                strokeLinejoin="round"
+                                                                                className="feather feather-star"
+                                                                            >
+                                                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                                            </svg>
+                                                                        </a>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        // Grid (Tile) View
+                                        <div className="grid-container">
+                                            <div className="row">
+                                                {currentItems.length > 0 &&
+                                                    currentItems.map((result, index) => (
+                                                        <div key={index} className="col-md-4">
+                                                            <div className="tile-card">
+                                                                <div className="tile-header">
+                                                                    <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
+                                                                    <p>{result.EventDate.toLocaleDateString()}</p>
+                                                                </div>
+                                                                <div className="tile-body">
+                                                                    <p>{result.City}</p>
+                                                                    <p>{result.EventOrganiser}</p>
+                                                                    <p>{result.EventType}</p>
+                                                                </div>
+                                                                <div className="tile-footer">
+                                                                    <a
+                                                                        href="#"
+                                                                        className={result.isFavourited ? 'star active' : 'star'}
+                                                                        onClick={(event) => handleStarClick(result.Id, result.Name, event)}
+                                                                    >
+                                                                        <svg
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                            width="24"
+                                                                            height="24"
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="2"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            className="feather feather-star"
+                                                                        >
+                                                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                                        </svg>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
