@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom'; // Correct import
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import './eventSearchPage.css';
 
 interface EventResult {
@@ -33,7 +33,7 @@ const EventSearchPage: React.FC = () => {
   const [eventResults, setEventResults] = useState<EventResult[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [location, setLocation] = useState<string>('');
+  const [searchMethod, setSearchMethod] = useState('name');
   const [sortOption, setSortOption] = useState<string>('');
   const [viewMode, setViewMode] = useState('list');
   const [favourites, setFavourites] = useState<Favourite[]>([]);
@@ -78,31 +78,38 @@ const EventSearchPage: React.FC = () => {
     try {
         document.cookie = `token=${token}; path=/`;
 
-        const response = await axios.get<EventResult[]>(`http://localhost:3030/returnresults?title=${searchTerm}`, {
-            withCredentials: true,
-        });
+        let response: AxiosResponse<EventResult[]>;
 
-        const favResponse = await axios.get<Favourite[]>('http://localhost:3030/getfavourites', {
-          withCredentials: true,
-        });
-
-        if (favResponse.data) {
-            setFavourites(favResponse.data);
-            const favSet = new Set(favResponse.data.map(fav => fav.EventId));
+        if (searchMethod === 'name') {
+          response = await axios.get<EventResult[]>(`http://localhost:3030/getresultsbyeventname?eventName=${searchTerm}`, {
+              withCredentials: true,
+          });
+        } else if (searchMethod === 'location') {
+          response = await axios.get<EventResult[]>(`http://localhost:3030/getresultsbyeventcity?city=${searchTerm}`, {
+              withCredentials: true,
+          });
         } else {
-            setFavourites([]); // Set an empty array or handle the situation as needed
+          response = await axios.get<EventResult[]>(`http://localhost:3030/getresultsbyeventorg?eventOrg=${searchTerm}`, {
+              withCredentials: true,
+          });
         }
 
-        const fetchedResults: EventResult[] = response.data
-        .map((item: any) => ({
-            ...item,
-            EventDate: new Date(item.EventDate),
-            isFavourited: isFavourite(item.Id) // Initialize isFavourited
-        }));
+        await updateFavourites();
 
-        const sortedResults = sortEventResults(fetchedResults);
+        if (response.data && Array.isArray(response.data)) {
+          const fetchedResults: EventResult[] = response.data
+          .map((item: any) => ({
+              ...item,
+              EventDate: new Date(item.EventDate),
+              isFavourited: isFavourite(item.Id) // Initialize isFavourited
+          }));
 
-        setEventResults(sortedResults);
+          const sortedResults = sortEventResults(fetchedResults);
+          setEventResults(sortedResults);
+        } else {
+          setEventResults([]);
+        }
+
         setCurrentPage(1);
     } catch (error) {
         console.error('Error fetching event data:', error);
@@ -127,20 +134,6 @@ const EventSearchPage: React.FC = () => {
       setViewMode('grid');
   };
 
-  // useEffect(() => {
-  //   const delayDebounceFn = setTimeout(() => {
-  //     if (searchTerm) {
-  //       handleSearch(); // Call handleSearch without event
-  //     }
-  //   }, 300); // Adjust the debounce delay as needed
-  
-  //   // Cleanup function to clear the timeout if searchTerm changes or component unmounts
-  //   return () => clearTimeout(delayDebounceFn);
-  // }, [searchTerm]); // Only re-run the effect if searchTerm changes  
-  
-  //   return () => clearTimeout(delayDebounceFn);
-  // }, [searchTerm]); 
-
   const handleLogout = async () => {
     try {
       await axios.get('http://localhost:3030/logout', {
@@ -159,22 +152,55 @@ const EventSearchPage: React.FC = () => {
     navigate(`/event/${eventId}`);
   };
 
+  const fetchFavourites = async () => {
+    try {
+        const response = await axios.get<Favourite[]>(`http://localhost:3030/getfavourites`, {
+            withCredentials: true,
+        });
+        setFavourites(response.data);
+        console.log("favourites in fetchFavourites: ", favourites)
+        return response.data
+    } catch (error) {
+        console.error("Error fetching favourites:", error);
+        return [];
+    }
+  };
+
+  const updateFavourites = async () => {
+      try {
+        const favData = await fetchFavourites();
+        setFavourites(favData);
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+      }
+    };
+
   useEffect(() => {
-      // Fetch the favourites when the component mounts
-      const fetchFavourites = async () => {
-          try {
-              const response = await axios.get<Favourite[]>(`http://localhost:3030/getfavourites`, {
-                  withCredentials: true,
-              });
-              setFavourites(response.data);
-              console.log("favourites in fetchFavourites: ", favourites)
-          } catch (error) {
-              console.error("Error fetching favourites:", error);
-          }
+      // Fetch favorites when the component mounts
+      const fetchInitialFavorites = async () => {
+        try {
+          const favData = await fetchFavourites();
+          setFavourites(favData);
+        } catch (error) {
+          console.error('Error fetching initial favorites:', error);
+        }
       };
 
-      fetchFavourites();
-  }, []);
+      fetchInitialFavorites();
+    }, []);
+
+    useEffect(() => {
+        // Function to update favorites based on the current search results
+        const updateFavorites = async () => {
+          const favData = await fetchFavourites();
+          setFavourites(favData);
+        };
+    
+        // Call updateFavorites whenever search results change
+        if (eventResults.length > 0) {
+          updateFavorites();
+        }
+      }, [eventResults]);
 
   const isFavourite = (eventId: number): boolean => {
     if (!favourites) {
@@ -232,7 +258,6 @@ const EventSearchPage: React.FC = () => {
   return (
     <div className="container mt-5">
       <div className="header-container">
-        <h2 className="event-search-title">Event Search</h2>
         <div className="logout-container">
           <Button variant="primary" onClick={handleLogout} className="logout-button">
             Logout
@@ -252,17 +277,13 @@ const EventSearchPage: React.FC = () => {
                           <Form.Control
                             as="select"
                             className="form-control"
-                            id="exampleFormControlSelect1"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
+                            id="searchMethod"
+                            value={searchMethod}
+                            onChange={(e) => setSearchMethod(e.target.value)}
                           >
-                            <option value="">Location</option>
-                            <option value="London">London</option>
-                            <option value="Boston">Bournemouth</option>
-                            <option value="Mumbai">Mumbai</option>
-                            <option value="New York">New York</option>
-                            <option value="Toronto">Toronto</option>
-                            <option value="Paris">Paris</option>
+                            <option value="name">Event Name</option>
+                            <option value="location">Location</option>
+                            <option value="organiser">Organiser</option>
                           </Form.Control>
                         </div>
                         <div className="col-lg-8 col-md-6 col-sm-12 p-0">
@@ -421,47 +442,40 @@ const EventSearchPage: React.FC = () => {
                                         </div>
                                     ) : (
                                         // Grid (Tile) View
-                                        <div className="grid-container">
-                                            <div className="row">
-                                                {currentItems.length > 0 &&
-                                                    currentItems.map((result, index) => (
-                                                        <div key={index} className="col-md-4">
-                                                            <div className="tile-card">
-                                                                <div className="tile-header">
-                                                                    <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
-                                                                    <p>{result.EventDate.toLocaleDateString()}</p>
-                                                                </div>
-                                                                <div className="tile-body">
-                                                                    <p>{result.City}</p>
-                                                                    <p>{result.EventOrganiser}</p>
-                                                                    <p>{result.EventType}</p>
-                                                                </div>
-                                                                <div className="tile-footer">
-                                                                    <a
-                                                                        href="#"
-                                                                        className={result.isFavourited ? 'star active' : 'star'}
-                                                                        onClick={(event) => handleStarClick(result.Id, result.Name, event)}
-                                                                    >
-                                                                        <svg
-                                                                            xmlns="http://www.w3.org/2000/svg"
-                                                                            width="24"
-                                                                            height="24"
-                                                                            viewBox="0 0 24 24"
-                                                                            fill="none"
-                                                                            stroke="currentColor"
-                                                                            strokeWidth="2"
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                            className="feather feather-star"
-                                                                        >
-                                                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                        </svg>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                            </div>
+                                        <div className="result-body">
+                                          <div className="tile-container">
+                                            {currentItems.length > 0 && currentItems.map((result, index) => (
+                                              <div key={index} className="tile-item">
+                                                <button onClick={() => handleRedirect(result.Id)}>
+                                                  {result.Name}
+                                                </button>
+                                                <p>{result.EventDate.toLocaleDateString()}</p>
+                                                <p>{result.City}</p>
+                                                <p>{result.EventOrganiser}</p>
+                                                <p>{result.EventType}</p>
+                                                <a
+                                                  href="#"
+                                                  className={result.isFavourited ? 'star active' : 'star'}
+                                                  onClick={(event) => handleStarClick(result.Id, result.Name, event)}
+                                                >
+                                                  <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    className="feather feather-star"
+                                                  >
+                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                  </svg>
+                                                </a>
+                                              </div>
+                                            ))}
+                                          </div>
                                         </div>
                                     )}
                                 </div>
