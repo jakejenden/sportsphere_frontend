@@ -95,6 +95,10 @@ const CreateUser: React.FC = () => {
       console.log('Form is invalid. Fix errors.', errors);
     }
   };
+
+  const handleLoginRedirect = () => {
+    navigate('/login');
+  };
   
   return (
     <div
@@ -108,6 +112,22 @@ const CreateUser: React.FC = () => {
         padding: '20px',
       }}
     >
+      <button
+        onClick={handleLoginRedirect}
+        style={{
+          position: 'absolute',
+          top: '10px',  // Distance from the top
+          left: '10px', // Distance from the left
+          padding: '10px 20px',
+          backgroundColor: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+        }}
+      >
+        Back to Login
+      </button>
       <h1 className="text-white mb-4">Create User</h1>
 
       <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '350px' }}>
