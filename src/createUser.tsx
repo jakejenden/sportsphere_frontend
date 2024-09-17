@@ -8,22 +8,25 @@ import './createUser.css'; // Import the custom CSS file for styling
 import { validateEmail } from './validation/validateEmail';
 import { validateUsername } from './validation/validateUsername';
 import { validatePassword } from './validation/validatePassword';
+import { validatePostcode } from './validation/validatePostcode';
 
 interface FormData {
   username: string;
   password: string;
   email: string;
+  postcode: string;
 }
 
 interface UsernameEmailUniqueResponse {
-  isUsernameUnique: boolean;
-  isEmailUnique: boolean;
+  UsernameUnique: boolean;
+  EmailUnique: boolean;
 }
 
 interface Errors {
   username?: string;
   password?: string;
   email?: string;
+  postcode?: string;
 }
 
 const CreateUser: React.FC = () => {
@@ -34,6 +37,7 @@ const CreateUser: React.FC = () => {
     username: '',
     password: '',
     email: '',
+    postcode: '',
   });
   
   const [retypePassword, setRetypePassword] = useState('');
@@ -43,11 +47,13 @@ const CreateUser: React.FC = () => {
     const emailError =  validateEmail(formData.email, isEmailUnique);
     const usernameError = validateUsername(formData.username, isUsernameUnique);
     const passwordError = validatePassword(formData.password, retypePassword);
+    const postcodeError = validatePostcode(formData.postcode);
 
     setErrors({
       email: emailError,
       username: usernameError,
       password: passwordError,
+      postcode: postcodeError,
     });
 
     return !emailError && !usernameError && !passwordError;
@@ -58,7 +64,7 @@ const CreateUser: React.FC = () => {
 
     setFormData({
       ...formData,
-      [name]: value, // dynamically update based on the input's name attribute
+      [name]: name === 'postcode' ? value.toUpperCase() : value
     });
   };
 
@@ -71,9 +77,11 @@ const CreateUser: React.FC = () => {
       },
     });
 
-    const {isUsernameUnique, isEmailUnique} = usernameEmailUniqueResponse.data
+    const {UsernameUnique, EmailUnique} = usernameEmailUniqueResponse.data
 
-    if (validateForm(isUsernameUnique, isEmailUnique)) {
+    console.log(EmailUnique, UsernameUnique)
+
+    if (validateForm(UsernameUnique, EmailUnique)) {
       try {
         const response = await axios.post(apiCreateUserURL, formData, {
           headers: {
@@ -204,6 +212,25 @@ const CreateUser: React.FC = () => {
             style={{ fontSize: '14px', paddingRight: '30px' }}
           />
           {errors.email && <span style={{ color: 'red' }}>{errors.email}</span>}
+        </div>
+
+        <div className="mb-3" style={{ paddingBottom: '20px' }}>
+          <label htmlFor="postcode" className="text-white" style={{ fontSize: '20px' }}>
+            Postcode:
+          </label>
+          <br />
+          <input
+            type="postcode"
+            id="postcode"
+            name="postcode"
+            value={formData.postcode}
+            onChange={handleInputChange}
+            placeholder="Enter Your Postcode"
+            required
+            className="col-12"
+            style={{ fontSize: '14px', paddingRight: '30px' }}
+          />
+          {errors.postcode && <span style={{ color: 'red' }}>{errors.postcode}</span>}
         </div>
 
         <button
