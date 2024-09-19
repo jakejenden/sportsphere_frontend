@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Button, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom'; // Correct import
 import axios, { AxiosResponse } from 'axios';
+import { API_URL } from './config';
 import './eventSearchPage.css';
 
 interface EventResult {
@@ -81,15 +82,15 @@ const EventSearchPage: React.FC = () => {
         let response: AxiosResponse<EventResult[]>;
 
         if (searchMethod === 'name') {
-          response = await axios.get<EventResult[]>(`http://localhost:3030/getresultsbyeventname?eventName=${searchTerm}`, {
+          response = await axios.get<EventResult[]>(`${API_URL}/getresultsbyeventname?eventName=${searchTerm}`, {
               withCredentials: true,
           });
         } else if (searchMethod === 'location') {
-          response = await axios.get<EventResult[]>(`http://localhost:3030/getresultsbyeventcity?city=${searchTerm}`, {
+          response = await axios.get<EventResult[]>(`${API_URL}/getresultsbyeventcity?city=${searchTerm}`, {
               withCredentials: true,
           });
         } else {
-          response = await axios.get<EventResult[]>(`http://localhost:3030/getresultsbyeventorg?eventOrg=${searchTerm}`, {
+          response = await axios.get<EventResult[]>(`${API_URL}/getresultsbyeventorg?eventOrg=${searchTerm}`, {
               withCredentials: true,
           });
         }
@@ -136,7 +137,7 @@ const EventSearchPage: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get('http://localhost:3030/logout', {
+      await axios.get(`${API_URL}/logout`, {
         withCredentials: true,
       });
 
@@ -154,7 +155,7 @@ const EventSearchPage: React.FC = () => {
 
   const fetchFavourites = async () => {
     try {
-        const response = await axios.get<Favourite[]>(`http://localhost:3030/getfavourites`, {
+        const response = await axios.get<Favourite[]>(`${API_URL}/getfavourites`, {
             withCredentials: true,
         });
         setFavourites(response.data);
@@ -220,25 +221,25 @@ const EventSearchPage: React.FC = () => {
     try {
         if (isFavourited) {
             // Delete favourite
-            const response = await axios.delete<ApiResponse>('http://localhost:3030/deletefavourite', {
+            const response = await axios.delete<ApiResponse>(`${API_URL}/deletefavourite`, {
                 data: payload,
                 withCredentials: true,
             });
             if (response.data.success) {
                 // Fetch the updated favourites list
-                const updatedFavourites = await axios.get<Favourite[]>('http://localhost:3030/getfavourites', {
+                const updatedFavourites = await axios.get<Favourite[]>(`${API_URL}/getfavourites`, {
                     withCredentials: true,
                 });
                 setFavourites(updatedFavourites.data);
             }
         } else {
             // Add favourite
-            const response = await axios.post<ApiResponse>('http://localhost:3030/addfavourite', payload, {
+            const response = await axios.post<ApiResponse>(`${API_URL}/addfavourite`, payload, {
                 withCredentials: true,
             });
             if (response.data.success) {
                 // Fetch the updated favourites list
-                const updatedFavourites = await axios.get<Favourite[]>('http://localhost:3030/getfavourites', {
+                const updatedFavourites = await axios.get<Favourite[]>(`${API_URL}/getfavourites`, {
                     withCredentials: true,
                 });
                 setFavourites(updatedFavourites.data);
