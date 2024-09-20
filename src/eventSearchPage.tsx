@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'; // Correct import
 import axios, { AxiosResponse } from 'axios';
 import { API_URL } from './config';
 import './eventSearchPage.css';
+import './eventSearchCarousel.css'
 
 interface EventResult {
   Id: number,
@@ -32,6 +33,7 @@ interface ApiResponse {
 const EventSearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [eventResults, setEventResults] = useState<EventResult[]>([]);
+  const [recommendedEventResults, setRecommendedEventResults] = useState<EventResult[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Loading state
   const [searchMethod, setSearchMethod] = useState('name');
@@ -39,12 +41,59 @@ const EventSearchPage: React.FC = () => {
   const [viewMode, setViewMode] = useState('list');
   const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchPerformed, setSearchPerformed] = useState(false);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [itemsPerPage] = useState(10);
   const navigate = useNavigate();
 
   // Calculate the index of the first and last item of the current page
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  const handleEventRecommendations = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+    }
+
+    let response: AxiosResponse<EventResult[]>;
+
+    try {
+      document.cookie = `token=${token}; path=/`;
+
+      response = await axios.get<EventResult[]>(`${API_URL}/getrecommendedevents`, {
+          withCredentials: true,
+      });
+  
+      if (response.data && Array.isArray(response.data)) {
+        const fetchedResults: EventResult[] = response.data
+        .map((item: any) => ({
+            ...item,
+            EventDate: new Date(item.EventDate)
+        }));
+  
+        setRecommendedEventResults(fetchedResults);
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations", error);
+    }
+  };
+
+  const handleNext = () => {
+    setCurrentCarouselIndex((prevIndex) => (prevIndex + 1) % recommendedEventResults.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentCarouselIndex((prevIndex) => (prevIndex - 1 + recommendedEventResults.length) % recommendedEventResults.length);
+  };
+
+  useEffect(() => {
+    // Fetch recommended events only when the component mounts
+    if (!searchPerformed) {
+      handleEventRecommendations();
+    }
+  }, [searchPerformed]);
+  
 
   const sortEventResults = (results: EventResult[]) => {
       switch (sortOption) {
@@ -111,6 +160,7 @@ const EventSearchPage: React.FC = () => {
           setEventResults([]);
         }
 
+        setSearchPerformed(true);
         setCurrentPage(1);
     } catch (error) {
         console.error('Error fetching event data:', error);
@@ -159,7 +209,6 @@ const EventSearchPage: React.FC = () => {
             withCredentials: true,
         });
         setFavourites(response.data);
-        console.log("favourites in fetchFavourites: ", favourites)
         return response.data
     } catch (error) {
         console.error("Error fetching favourites:", error);
@@ -315,201 +364,217 @@ const EventSearchPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-12">
-            <div className="card card-margin">
-                <div className="card-body">
-                    <div className="row search-body">
-                        <div className="col-lg-12">
-                            <div className="search-result">
-                                <div className="result-header">
-                                    <div className="row">
-                                        <div className="col-lg-6">
-                                            <div className="records">Showing: <b>{indexOfFirstItem + 1}-{indexOfLastItem}</b> of <b>{eventResults.length}</b> result</div>
-                                        </div>
-                                        <div className="col-lg-6">
-                                            <div className="result-actions">
-                                                <div className="result-sorting">
-                                                    <span>Sort By:</span>
-                                                    <select className="form-control border-0" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-                                                        <option value="date-desc">Date</option>
-                                                        <option value="alphabetical-asc">Names (A-Z)</option>
-                                                        <option value="alphabetical-desc">Names (Z-A)</option>
-                                                    </select>
-                                                </div>
-                                                <div className="result-views">
-                                                    <button type="button" className="btn btn-soft-base btn-icon" onClick={handleListView}>
-                                                        <svg
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            width="24"
-                                                            height="24"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            className="feather feather-list"
-                                                        >
-                                                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                                                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                                                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                                                            <line x1="3" y1="6" x2="3" y2="6"></line>
-                                                            <line x1="3" y1="12" x2="3" y2="12"></line>
-                                                            <line x1="3" y1="18" x2="3" y2="18"></line>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" className="btn btn-soft-base btn-icon" onClick={handleGridView}>
-                                                        <svg
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            width="24"
-                                                            height="24"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            className="feather feather-grid"
-                                                        >
-                                                            <rect x="3" y="3" width="7" height="7"></rect>
-                                                            <rect x="14" y="3" width="7" height="7"></rect>
-                                                            <rect x="14" y="14" width="7" height="7"></rect>
-                                                            <rect x="3" y="14" width="7" height="7"></rect>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="result-body">
-                                  {viewMode === 'list' ? (
-                                        // List (Table) View
-                                        <div className="table-responsive">
-                                            <table className="table widget-26">
-                                                <tbody>
-                                                    {currentItems.length > 0 &&
-                                                        currentItems.map((result, index) => (
-                                                            <tr key={index}>
-                                                                <td>
-                                                                    <div className="widget-26-job-title">
-                                                                        <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
-                                                                        <p className="m-0">{result.EventDate.toLocaleDateString()}</p>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="widget-26-job-info">
-                                                                        <p className="type m-0">{result.City}</p>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="widget-26-job-salary">{result.EventOrganiser}</div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="widget-26-job-category bg-soft-base">
-                                                                        <i className="indicator bg-base"></i>
-                                                                        <span>{result.EventType}</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="widget-26-job-starred">
-                                                                        <a
-                                                                            href="#"
-                                                                            className={result.isFavourited ? 'star active' : 'star'}
-                                                                            onClick={(event) => handleStarClick(result.Id, result.Name, event)}
-                                                                        >
-                                                                            <svg
-                                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                                width="24"
-                                                                                height="24"
-                                                                                viewBox="0 0 24 24"
-                                                                                fill="none"
-                                                                                stroke="currentColor"
-                                                                                strokeWidth="2"
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                className="feather feather-star"
-                                                                            >
-                                                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                                            </svg>
-                                                                        </a>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        // Grid (Tile) View
-                                        <div className="result-body">
-                                          <div className="tile-container">
-                                            {currentItems.length > 0 && currentItems.map((result, index) => (
-                                              <div key={index} className="tile-item">
-                                                <button onClick={() => handleRedirect(result.Id)}>
-                                                  {result.Name}
-                                                </button>
-                                                <p>{result.EventDate.toLocaleDateString()}</p>
-                                                <p>{result.City}</p>
-                                                <p>{result.EventOrganiser}</p>
-                                                <p>{result.EventType}</p>
-                                                <a
-                                                  href="#"
-                                                  className={result.isFavourited ? 'star active' : 'star'}
-                                                  onClick={(event) => handleStarClick(result.Id, result.Name, event)}
-                                                >
-                                                  <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    width="24"
-                                                    height="24"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    className="feather feather-star"
-                                                  >
-                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                  </svg>
-                                                </a>
-                                              </div>
-                                            ))}
+      {searchPerformed ? ( 
+        <div className="row">
+          <div className="col-12">
+              <div className="card card-margin">
+                  <div className="card-body">
+                      <div className="row search-body">
+                          <div className="col-lg-12">
+                              <div className="search-result">
+                                  <div className="result-header">
+                                      <div className="row">
+                                          <div className="col-lg-6">
+                                              <div className="records">Showing: <b>{indexOfFirstItem + 1}-{indexOfLastItem}</b> of <b>{eventResults.length}</b> result</div>
                                           </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <nav className="d-flex justify-content-center">
-                      <ul className="pagination pagination-base pagination-boxed pagination-square mb-0">
-                          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                              <button className="page-link no-border" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
-                                  «
-                              </button>
-                          </li>
-                          {Array.from({ length: totalPages }, (_, index) => (
-                              <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                                  <button className="page-link no-border" onClick={() => setCurrentPage(index + 1)}>
-                                      {index + 1}
-                                  </button>
-                              </li>
-                          ))}
-                          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                              <button className="page-link no-border" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
-                                  »
-                              </button>
-                          </li>
-                      </ul>
-                  </nav>
-                </div>
-            </div>
+                                          <div className="col-lg-6">
+                                              <div className="result-actions">
+                                                  <div className="result-sorting">
+                                                      <span>Sort By:</span>
+                                                      <select className="form-control border-0" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                                                          <option value="date-desc">Date</option>
+                                                          <option value="alphabetical-asc">Names (A-Z)</option>
+                                                          <option value="alphabetical-desc">Names (Z-A)</option>
+                                                      </select>
+                                                  </div>
+                                                  <div className="result-views">
+                                                      <button type="button" className="btn btn-soft-base btn-icon" onClick={handleListView}>
+                                                          <svg
+                                                              xmlns="http://www.w3.org/2000/svg"
+                                                              width="24"
+                                                              height="24"
+                                                              viewBox="0 0 24 24"
+                                                              fill="none"
+                                                              stroke="currentColor"
+                                                              strokeWidth="2"
+                                                              strokeLinecap="round"
+                                                              strokeLinejoin="round"
+                                                              className="feather feather-list"
+                                                          >
+                                                              <line x1="8" y1="6" x2="21" y2="6"></line>
+                                                              <line x1="8" y1="12" x2="21" y2="12"></line>
+                                                              <line x1="8" y1="18" x2="21" y2="18"></line>
+                                                              <line x1="3" y1="6" x2="3" y2="6"></line>
+                                                              <line x1="3" y1="12" x2="3" y2="12"></line>
+                                                              <line x1="3" y1="18" x2="3" y2="18"></line>
+                                                          </svg>
+                                                      </button>
+                                                      <button type="button" className="btn btn-soft-base btn-icon" onClick={handleGridView}>
+                                                          <svg
+                                                              xmlns="http://www.w3.org/2000/svg"
+                                                              width="24"
+                                                              height="24"
+                                                              viewBox="0 0 24 24"
+                                                              fill="none"
+                                                              stroke="currentColor"
+                                                              strokeWidth="2"
+                                                              strokeLinecap="round"
+                                                              strokeLinejoin="round"
+                                                              className="feather feather-grid"
+                                                          >
+                                                              <rect x="3" y="3" width="7" height="7"></rect>
+                                                              <rect x="14" y="3" width="7" height="7"></rect>
+                                                              <rect x="14" y="14" width="7" height="7"></rect>
+                                                              <rect x="3" y="14" width="7" height="7"></rect>
+                                                          </svg>
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div className="result-body">
+                                    {viewMode === 'list' ? (
+                                          // List (Table) View
+                                          <div className="table-responsive">
+                                              <table className="table widget-26">
+                                                  <tbody>
+                                                      {currentItems.length > 0 &&
+                                                          currentItems.map((result, index) => (
+                                                              <tr key={index}>
+                                                                  <td>
+                                                                      <div className="widget-26-job-title">
+                                                                          <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
+                                                                          <p className="m-0">{result.EventDate.toLocaleDateString()}</p>
+                                                                      </div>
+                                                                  </td>
+                                                                  <td>
+                                                                      <div className="widget-26-job-info">
+                                                                          <p className="type m-0">{result.City}</p>
+                                                                      </div>
+                                                                  </td>
+                                                                  <td>
+                                                                      <div className="widget-26-job-salary">{result.EventOrganiser}</div>
+                                                                  </td>
+                                                                  <td>
+                                                                      <div className="widget-26-job-category bg-soft-base">
+                                                                          <i className="indicator bg-base"></i>
+                                                                          <span>{result.EventType}</span>
+                                                                      </div>
+                                                                  </td>
+                                                                  <td>
+                                                                      <div className="widget-26-job-starred">
+                                                                          <a
+                                                                              href="#"
+                                                                              className={result.isFavourited ? 'star active' : 'star'}
+                                                                              onClick={(event) => handleStarClick(result.Id, result.Name, event)}
+                                                                          >
+                                                                              <svg
+                                                                                  xmlns="http://www.w3.org/2000/svg"
+                                                                                  width="24"
+                                                                                  height="24"
+                                                                                  viewBox="0 0 24 24"
+                                                                                  fill="none"
+                                                                                  stroke="currentColor"
+                                                                                  strokeWidth="2"
+                                                                                  strokeLinecap="round"
+                                                                                  strokeLinejoin="round"
+                                                                                  className="feather feather-star"
+                                                                              >
+                                                                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                                              </svg>
+                                                                          </a>
+                                                                      </div>
+                                                                  </td>
+                                                              </tr>
+                                                          ))}
+                                                  </tbody>
+                                              </table>
+                                          </div>
+                                      ) : (
+                                          // Grid (Tile) View
+                                          <div className="result-body">
+                                            <div className="tile-container">
+                                              {currentItems.length > 0 && currentItems.map((result, index) => (
+                                                <div key={index} className="tile-item">
+                                                  <button onClick={() => handleRedirect(result.Id)}>
+                                                    {result.Name}
+                                                  </button>
+                                                  <p>{result.EventDate.toLocaleDateString()}</p>
+                                                  <p>{result.City}</p>
+                                                  <p>{result.EventOrganiser}</p>
+                                                  <p>{result.EventType}</p>
+                                                  <a
+                                                    href="#"
+                                                    className={result.isFavourited ? 'star active' : 'star'}
+                                                    onClick={(event) => handleStarClick(result.Id, result.Name, event)}
+                                                  >
+                                                    <svg
+                                                      xmlns="http://www.w3.org/2000/svg"
+                                                      width="24"
+                                                      height="24"
+                                                      viewBox="0 0 24 24"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      strokeWidth="2"
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      className="feather feather-star"
+                                                    >
+                                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                    </svg>
+                                                  </a>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <nav className="d-flex justify-content-center">
+                        <ul className="pagination pagination-base pagination-boxed pagination-square mb-0">
+                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                <button className="page-link no-border" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                                    «
+                                </button>
+                            </li>
+                            {Array.from({ length: totalPages }, (_, index) => (
+                                <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                                    <button className="page-link no-border" onClick={() => setCurrentPage(index + 1)}>
+                                        {index + 1}
+                                    </button>
+                                </li>
+                            ))}
+                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                <button className="page-link no-border" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                                    »
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                  </div>
+              </div>
+          </div>
+      </div>
+      ) : (
+      <div className="carousel-container mt-4">
+        <div className="carousel">
+          <button className="prev" onClick={handlePrev}>
+            &#10094;
+          </button>
+          <div className="carousel-content">
+            <h2>{recommendedEventResults[currentCarouselIndex]?.Name}</h2>
+            <p>{recommendedEventResults[currentCarouselIndex]?.City}</p>
+          </div>
+          <button className="next" onClick={handleNext}>
+            &#10095;
+          </button>
         </div>
       </div>
-    </div>
-  );
-};
+  )}
+  </div>
+)};
 
 export default EventSearchPage;

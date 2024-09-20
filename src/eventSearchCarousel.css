@@ -1,0 +1,29 @@
+.carousel-container {
+  width: 100%; /* Ensure it takes full width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px; /* Adjust spacing as needed */
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 80%; /* Restrict max width to prevent stretching */
+}
+
+.carousel-content {
+  text-align: center;
+}
+
+.carousel button {
+  background-color: transparent;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.prev, .next {
+  flex-shrink: 0;
+}
