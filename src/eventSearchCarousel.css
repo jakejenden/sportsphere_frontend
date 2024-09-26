@@ -1,29 +1,145 @@
+/* Carousel Container */
 .carousel-container {
-  width: 100%; /* Ensure it takes full width */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px; /* Adjust spacing as needed */
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Carousel Styling */
 .carousel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 80%; /* Restrict max width to prevent stretching */
+  position: relative;
+  min-height: 200px;
+  background-color: #fff;
+  padding-left: 10px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.carousel-content {
-  text-align: center;
+.carousel-inner {
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* Prevents overlapping */
 }
 
-.carousel button {
-  background-color: transparent;
-  border: none;
-  font-size: 2rem;
+.carousel-inner .item {
+  display: none; /* Hide all items by default */
+  position: relative;
+  transition: transform 0.6s ease; /* Smooth transition */
+}
+
+.carousel-inner .item.active {
+  display: block;
+}
+
+.carousel-inner img {
+  width: 100%; /* Make images responsive */
+  height: auto;
+}
+
+/* Sidebar Styling */
+/* Sidebar Container */
+.result {
+  padding: 20px;
+  background-color: #f0f0f0; /* Light gray background */
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 400px; /* Limit height for better UI */
+  overflow-y: auto; /* Enable scrolling if content exceeds height */
+}
+
+/* Individual Event Item */
+.result p {
+  padding: 10px;
+  display: block;
+  margin: 10px 0;
+  background-color: #e9ecef; /* Slightly darker gray */
+  border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth background transition */
 }
 
-.prev, .next {
-  flex-shrink: 0;
+/* Active Item Style */
+.result p.active-p {
+  background-color: #00bcd4; /* Highlight color for active event */
+  color: white; /* White text on highlight */
+}
+
+/* Hover Effect */
+.result p:hover {
+  background-color: #dee2e6; /* Darker gray on hover */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .result {
+    padding: 10px;
+  }
+}
+
+@media (min-width: 768px) {
+  .result p {
+    height: 50px; /* Adjust height for larger screens */
+  }
+}
+
+@media (min-width: 992px) {
+  .result p {
+    height: 68px; /* Further adjust height */
+  }
+}
+
+@media (min-width: 1200px) {
+  .result p {
+    height: 85px; /* Further adjust height */
+    line-height: 85px; /* Center text vertically */
+  }
+}
+/* Carousel Controls */
+.carousel-control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.carousel-control.left {
+  left: 10px;
+}
+
+.carousel-control.right {
+  right: 15px;
+}
+
+.carousel-control:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.carousel-control span {
+  color: #fff;
+  font-size: 24px;
+}
+
+.sr-only {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .carousel-container {
+    padding: 10px;
+  }
+
+  .result {
+    margin-top: 20px;
+  }
+
+  .carousel-control.left, .carousel-control.right {
+    display: none;
+  }
 }

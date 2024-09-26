@@ -39,12 +39,12 @@ const CreateUser: React.FC = () => {
     email: '',
     postcode: '',
   });
-  
+
   const [retypePassword, setRetypePassword] = useState('');
   const [errors, setErrors] = useState<Errors>({});
 
   const validateForm = (isEmailUnique: boolean, isUsernameUnique: boolean) => {
-    const emailError =  validateEmail(formData.email, isEmailUnique);
+    const emailError = validateEmail(formData.email, isEmailUnique);
     const usernameError = validateUsername(formData.username, isUsernameUnique);
     const passwordError = validatePassword(formData.password, retypePassword);
     const postcodeError = validatePostcode(formData.postcode);
@@ -71,13 +71,13 @@ const CreateUser: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const usernameEmailUniqueResponse = await axios.post<UsernameEmailUniqueResponse>(apiCheckUsernameEmailUnique, {email: formData.email, username: formData.username}, {
+    const usernameEmailUniqueResponse = await axios.post<UsernameEmailUniqueResponse>(apiCheckUsernameEmailUnique, { email: formData.email, username: formData.username }, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    const {UsernameUnique, EmailUnique} = usernameEmailUniqueResponse.data
+    const { UsernameUnique, EmailUnique } = usernameEmailUniqueResponse.data
 
     console.log(EmailUnique, UsernameUnique)
 
@@ -88,7 +88,7 @@ const CreateUser: React.FC = () => {
             'Content-Type': 'application/json',
           },
         });
-    
+
         // Handle success, e.g., show a success message or redirect to another page
         console.log('User created successfully', response.data);
 
@@ -107,7 +107,7 @@ const CreateUser: React.FC = () => {
   const handleLoginRedirect = () => {
     navigate('/login');
   };
-  
+
   return (
     <div
       className="dark-background text-center"

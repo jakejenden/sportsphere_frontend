@@ -84,7 +84,7 @@ const LoginPage: React.FC = () => {
           Login
         </Button><br /><br />
 
-        <Link to="/create-user" className="btn btn-secondary mt-2"  style={{ fontSize: '10px', padding: '3px' }}>
+        <Link to="/create-user" className="btn btn-secondary mt-2" style={{ fontSize: '10px', padding: '3px' }}>
           Create User
         </Link>
       </Form>
