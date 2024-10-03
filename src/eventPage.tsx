@@ -14,12 +14,12 @@ interface GPXData {
 function formatFileName(fileName: string): string {
     // Remove the file extension using regex
     const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
-    
+
     // Replace underscores with spaces
     const formattedName = nameWithoutExtension.replace(/_/g, " ");
-    
+
     return formattedName;
-  }
+}
 
 const EventPage: React.FC = () => {
     const { eventId } = useParams();
@@ -78,7 +78,7 @@ const EventPage: React.FC = () => {
     return (
         <>
             <div className="container">
-            <button onClick={handleBackToSearch}>Back to Search Events</button>
+                <button onClick={handleBackToSearch}>Back to Search Events</button>
                 <div className="row justify-content-center">
                     <div className="col-md-7 col-lg-4 mb-5 mb-lg-0 wow fadeIn">
                         <div className="card border-0 shadow">
@@ -183,25 +183,25 @@ const EventPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-            <div>
-                {Array.isArray(eventGPXDataList) && eventGPXDataList.length > 0 ? (
-                    eventGPXDataList.map((gpxItem, index) => {
-                        console.log('Rendering GPX Item:', gpxItem); // Debug log
-                        return (
-                            <div key={index}>
-                                <h2>{formatFileName(gpxItem.Key)}</h2> {/* Title as the event key */}
-                                <MapboxMap gpxData={gpxItem.GPX} />
-                            </div>
-                        );
-                    })
-                ) : (
-                    <p></p>
-                )}
+                <div>
+                    {Array.isArray(eventGPXDataList) && eventGPXDataList.length > 0 ? (
+                        eventGPXDataList.map((gpxItem, index) => {
+                            console.log('Rendering GPX Item:', gpxItem); // Debug log
+                            return (
+                                <div key={index}>
+                                    <h2>{formatFileName(gpxItem.Key)}</h2> {/* Title as the event key */}
+                                    <MapboxMap gpxData={gpxItem.GPX} />
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <p></p>
+                    )}
+                </div>
             </div>
         </>
     );
-};
+}
 
 export default EventPage;
 

@@ -6,6 +6,8 @@ import CreateUser from './createUser';
 import LoginPage from './loginPage'; // Import your login page component
 import EventSearchPage from './eventSearchPage';
 import EventPage from './eventPage';
+import ForgotPassword from './forgotPassword';
+import ResetPasswordPage from './resetPassword';
 
 const AppRouter: React.FC = () => {
   return (
@@ -13,6 +15,8 @@ const AppRouter: React.FC = () => {
       <Routes>
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password-email" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/return-results" element={<EventSearchPage />} />
         <Route path="/event/:eventId" element={<EventPage />} />
         {/* Add other routes as needed */}

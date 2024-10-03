@@ -84,6 +84,10 @@ const LoginPage: React.FC = () => {
           Login
         </Button><br /><br />
 
+        <Link to="/reset-password-email">
+          Reset my Password
+        </Link><br />
+
         <Link to="/create-user" className="btn btn-secondary mt-2" style={{ fontSize: '10px', padding: '3px' }}>
           Create User
         </Link>
