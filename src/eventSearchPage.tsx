@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom'; // Correct import
 import axios, { AxiosResponse } from 'axios';
 import { API_URL } from './config';
 import './eventSearchPage.css';
-import './eventSearchCarousel.css'
+import './eventSearchCarousel.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Includes Popper.js
+import 'bootstrap/dist/css/bootstrap.min.css'; // Bootstrap CSS
+
 
 interface EventResult {
   Id: number,
@@ -16,6 +19,7 @@ interface EventResult {
   EventDate: Date;
   EventType: string;
   EventOrganiser: string;
+  PresignedImageURL: string;
   isFavourited?: boolean;
 }
 
@@ -72,6 +76,7 @@ const EventSearchPage: React.FC = () => {
             EventDate: new Date(item.EventDate)
           }));
 
+        console.log(fetchedResults);
         setRecommendedEventResults(fetchedResults);
       }
     } catch (error) {
@@ -199,6 +204,10 @@ const EventSearchPage: React.FC = () => {
     }
   };
 
+  const handleRedirectToProfile = () => {
+    navigate('/account-details')
+  }
+
   const handleRedirect = (eventId: number) => {
     navigate(`/event/${eventId}`);
   };
@@ -309,9 +318,15 @@ const EventSearchPage: React.FC = () => {
     <div className="container mt-5">
       <div className="header-container">
         <div className="logout-container">
-          <Button variant="primary" onClick={handleLogout} className="logout-button">
-            Logout
-          </Button>
+          <div className="dropdown">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+              Settings
+            </button>
+            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+              <li><a className="dropdown-item" href="#" onClick={handleRedirectToProfile}>Profile</a></li>
+              <li><a className="dropdown-item" href="#" onClick={handleLogout}>Logout</a></li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -585,8 +600,10 @@ const EventSearchPage: React.FC = () => {
                       className={`item ${index === currentCarouselIndex ? "active" : ""}`}
                     >
                       <img
-                        src={`http://via.placeholder.com/600x400?text=${encodeURIComponent(event.Name)}`}
+                        src={event.PresignedImageURL}
                         alt={event.Name}
+                        onClick={() => handleRedirect(event.Id)}
+                        style={{ cursor: 'pointer' }}
                       />
                     </div>
                   ))}

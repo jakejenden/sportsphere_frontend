@@ -8,6 +8,7 @@ import EventSearchPage from './eventSearchPage';
 import EventPage from './eventPage';
 import ForgotPassword from './forgotPassword';
 import ResetPasswordPage from './resetPassword';
+import AccountDetailsPage from './accountDetails';
 
 const AppRouter: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const AppRouter: React.FC = () => {
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/return-results" element={<EventSearchPage />} />
         <Route path="/event/:eventId" element={<EventPage />} />
+        <Route path="/account-details" element={<AccountDetailsPage />} />
         {/* Add other routes as needed */}
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>

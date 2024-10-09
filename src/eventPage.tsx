@@ -21,9 +21,27 @@ function formatFileName(fileName: string): string {
     return formattedName;
 }
 
+interface EventDetails {
+    Id: number;
+    Name: string;
+    Street: string;
+    City: string;
+    County: string;
+    PostCode: string;
+    EventDate: Date;
+    EventType: string;
+    EventOrganiser: string;
+}
+
+  interface EventImage {
+    PresignedURL: string;
+}
+
 const EventPage: React.FC = () => {
     const { eventId } = useParams();
     const [eventGPXDataList, setEventGPXDataList] = useState<GPXData[]>([]);
+    const [eventDetails, setEventDetails] = useState<EventDetails | undefined>(undefined);
+    const [imageURL, setImageURL] = useState<EventImage>();
     const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
@@ -48,11 +66,10 @@ const EventPage: React.FC = () => {
 
                         if (Array.isArray(gpxResponse.data)) {
                             setEventGPXDataList(gpxResponse.data);
-                            console.log(eventGPXDataList);
-                            console.log(gpxResponse.data);
                         } else {
                             console.error('Unexpected data format:', gpxResponse.data);
                         }
+
                     } catch (error) {
                         console.error('Error fetching GPX routes data:', error);
                     }
@@ -64,12 +81,57 @@ const EventPage: React.FC = () => {
             }
         };
 
+        const fetchEventDetails = async () => {
+            if (eventId) {
+                const id = Number(eventId); // Convert string to number
+                if (!isNaN(id)) { // Check if id is a valid number
+                    try {
+                        const getEventResultsResponse = await axios.get<EventDetails>(`${API_URL}/getresultsbyeventid?id=${eventId}`, {
+                            withCredentials: true,
+                        });
+                        console.log(getEventResultsResponse);
+
+                        const eventData: EventDetails = {
+                            ...getEventResultsResponse.data,
+                            EventDate: new Date(getEventResultsResponse.data.EventDate),
+                        }
+
+                        setEventDetails(eventData);
+
+                    } catch (error) {
+                        console.error('Error fetching event details:', error);
+                    }
+                } else {
+                    console.error('Invalid EventId');
+                }
+            } else {
+                console.error('EventId is undefined');
+            }
+        };
+
+        fetchEventDetails();
         fetchEventGPXData();
     }, [eventId]); // Runs only when eventId changes
 
     useEffect(() => {
-        console.log('Event GPX Data List updated:', eventGPXDataList);
-    }, [eventGPXDataList]);
+        const fetchImagePresignedURL = async () => {
+            if (eventDetails) {
+                try {
+                    const getImageResponse = await axios.get<EventImage>(`${API_URL}/geteventimage?eventName=${eventDetails.Name}`, {
+                        withCredentials: true,
+                    });
+
+                    setImageURL(getImageResponse.data);
+                } catch (error) {
+                    console.error('Error fetching event image URL:', error);
+                }
+            } else {
+                console.error('eventDetails is undefined');
+            }
+        };
+
+        fetchImagePresignedURL();
+    }, [eventDetails]);
 
     const handleBackToSearch = () => {
         navigate('/return-results');
@@ -82,7 +144,7 @@ const EventPage: React.FC = () => {
                 <div className="row justify-content-center">
                     <div className="col-md-7 col-lg-4 mb-5 mb-lg-0 wow fadeIn">
                         <div className="card border-0 shadow">
-                            <img src="https://www.bootdey.com/img/Content/avatar/avatar6.png" alt="..." />
+                            <img src={imageURL?.PresignedURL} alt="..." />
                             <div className="card-body p-1-9 p-xl-5">
                                 <div className="mb-4">
                                     <h3 className="h4 mb-0">Dakota Johnston</h3>
