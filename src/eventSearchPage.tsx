@@ -18,6 +18,7 @@ interface EventResult {
   PostCode: string;
   EventDate: Date;
   EventType: string;
+  Distance: string;
   EventOrganiser: string;
   PresignedImageURL: string;
   isFavourited?: boolean;
