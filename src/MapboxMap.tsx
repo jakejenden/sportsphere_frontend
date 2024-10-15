@@ -34,11 +34,11 @@ function formatFileName(fileName: string): string {
 const Legend: React.FC<LegendProps> = ({ gpxDataList, routeColors, toggleRouteVisibility, visibleRoutes }) => {
   return (
     <div className="legend">
-      <h4>Legend (Click to Toggle Routes)</h4>
+      <h5>Legend (Click to Toggle Routes)</h5>
       <ul>
         {gpxDataList.map((gpxData, index) => (
           <li
-            key={gpxData.Key}
+            key={formatFileName(gpxData.Key)}
             onClick={() => toggleRouteVisibility(index)}
             style={{
               display: 'flex',
@@ -56,7 +56,7 @@ const Legend: React.FC<LegendProps> = ({ gpxDataList, routeColors, toggleRouteVi
                 marginRight: '10px',
               }}
             />
-            {gpxData.Key}
+            {formatFileName(gpxData.Key)}
           </li>
         ))}
       </ul>
@@ -68,8 +68,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<mapboxgl.Map | null>(null);
   const [routeColors, setRouteColors] = useState<string[]>([]);
-  const [visibleRoutes, setVisibleRoutes] = useState<boolean[]>([]);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const [visibleRoutes, setVisibleRoutes] = useState<boolean[]>([]); 
 
   useEffect(() => {
     if (!mapInstance.current && mapContainerRef.current) {
@@ -81,18 +80,21 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
       });
 
       mapInstance.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    }
+    
 
     const map = mapInstance.current;
+
 
     if (gpxDataList) {
       let allCoordinates: [number, number][] = [];
       const colors = ['#FF0000', '#0000FF', '#FF00FF'];
       setRouteColors(colors);
-      setVisibleRoutes(new Array(gpxDataList.length).fill(true));
 
       map?.on('load', () => {
         gpxDataList.forEach((GPXData, index) => {
+          const initialVisibility = gpxDataList.map(() => true); // All routes visible initially
+          setVisibleRoutes(initialVisibility);
+
           const decodedGPX = atob(GPXData.GPX);
           let gpxParser = require('gpxparser');
           var gpx = new gpxParser();
@@ -161,33 +163,40 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
         }
       });
     }
+  }
 
     return () => {
       // Check if mapInstance.current is initialized before calling remove
       if (mapInstance.current) {
-        mapInstance.current.remove();  // Clean up the map instance
+        mapInstance.current?.remove();  // Clean up the map instance
         mapInstance.current = null; // Clear reference to allow re-initialization
       }
     };
   }, [gpxDataList]);
 
   const toggleRouteVisibility = (index: number) => {
-    if (!map.current) return; // Access the map through `map.current`
-
-    const updatedVisibility = [...visibleRoutes];
-    updatedVisibility[index] = !updatedVisibility[index]; // Toggle visibility in state
-    setVisibleRoutes(updatedVisibility);
+    if (!mapInstance.current) {
+      console.error("Map is not initialized.");
+      return;
+    }
 
     const routeLineId = 'gpxRouteLine' + String(index);
 
-    if (map.current.getLayer(routeLineId)) { // Check if the layer exists
-      const currentVisibility = map.current.getLayoutProperty(routeLineId, 'visibility');
+    // Log to verify that the layer exists before trying to access it
+    if (mapInstance.current.getLayer(routeLineId)) {
+      const currentVisibility = mapInstance.current.getLayoutProperty(routeLineId, 'visibility');
+      console.log("Current visibility for route", routeLineId, ":", currentVisibility);
 
-      if (currentVisibility) {
-        map.current.setLayoutProperty(routeLineId, 'visibility', currentVisibility === 'visible' ? 'none' : 'visible');
-      }
+      // Toggle visibility
+      const newVisibility = currentVisibility === 'visible' ? 'none' : 'visible';
+      mapInstance.current.setLayoutProperty(routeLineId, 'visibility', newVisibility);
+
+      // Update state to reflect the new visibility state
+      const updatedVisibility = [...visibleRoutes];
+      updatedVisibility[index] = newVisibility === 'visible'; // Sync with map state
+      setVisibleRoutes(updatedVisibility);
     } else {
-      console.error(`Layer ${routeLineId} not found.`);
+      console.error("Layer not found for route:", routeLineId);
     }
   };
 

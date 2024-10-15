@@ -13,13 +13,17 @@
 }
 
 .legend {
-position: absolute;
-bottom: 20px;
-left: 20px;
-background: rgba(255, 255, 255, 0.8);
-padding: 10px;
-border-radius: 5px;
-font-family: Arial, sans-serif;
+position: relative; /* Or static */
+top: 10px; /* Adjust top position */
+left: 10px; /* Adjust left position */
+}
+
+@media (max-width: 600px) {
+.legend {
+    position: static; /* Change to static */
+    margin: 10px; /* Add some margin */
+    width: 100%; /* Make it full width on smaller screens */
+}
 }
 
 .legend ul {

@@ -259,7 +259,7 @@ const EventPage: React.FC = () => {
                         <MapboxMap gpxDataList={eventGPXDataList} />
                     </div>
                     ) : (
-                        <p></p>
+                        <p>No GPX data available</p>
                     )}
                 </div>
             </div>
