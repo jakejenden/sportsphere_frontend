@@ -11,16 +11,6 @@ interface GPXData {
     GPX: string; // GPX data in string format (can be base64 encoded)
 }
 
-function formatFileName(fileName: string): string {
-    // Remove the file extension using regex
-    const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
-
-    // Replace underscores with spaces
-    const formattedName = nameWithoutExtension.replace(/_/g, " ");
-
-    return formattedName;
-}
-
 interface EventDetails {
     Id: number;
     Name: string;
@@ -34,6 +24,16 @@ interface EventDetails {
     EventOrganiser: string;
 }
 
+interface DisciplineDetail {
+    Id: number;
+    EventName: string;
+    Category: string;
+    DisciplineName: string;
+    TotalDistance: number;
+    Metric: string;
+    Laps: number;
+}
+
   interface EventImage {
     PresignedURL: string;
 }
@@ -41,9 +41,18 @@ interface EventDetails {
 const EventPage: React.FC = () => {
     const { eventId } = useParams();
     const [eventGPXDataList, setEventGPXDataList] = useState<GPXData[]>([]);
+    const [discDetailsList, setDiscDetailsList] = useState<DisciplineDetail[]>([]);
     const [eventDetails, setEventDetails] = useState<EventDetails | undefined>(undefined);
     const [imageURL, setImageURL] = useState<EventImage>();
     const navigate = useNavigate();
+
+    const groupedByCategory = discDetailsList.reduce((acc, discItem) => {
+    if (!acc[discItem.Category]) {
+        acc[discItem.Category] = [];
+    }
+    acc[discItem.Category].push(discItem); // Push the entire object
+    return acc;
+    }, {} as { [key: string]: { DisciplineName: string; TotalDistance: number; Metric: string }[] });
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -110,8 +119,37 @@ const EventPage: React.FC = () => {
             }
         };
 
+        const fetchDisplineDetails = async () => {
+            if (eventId) {
+                const id = Number(eventId);
+                if (!isNaN(id)) {
+                    try {
+                        const getDisplineDetails = await axios.post(`${API_URL}/getdisciplines`, { EventId: id }, {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                            withCredentials: true,
+                        });
+    
+                        if (Array.isArray(getDisplineDetails.data)) {
+                            setDiscDetailsList(getDisplineDetails.data);
+                        } else {
+                            console.error('Unexpected data format:', getDisplineDetails.data);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching desciplines:', error)
+                    }
+                } else {
+                    console.error('Invalid EventId');
+                }
+            } else {
+                console.error('EventId is undefined');
+            }
+        };
+
         fetchEventDetails();
         fetchEventGPXData();
+        fetchDisplineDetails();
     }, [eventId]); // Runs only when eventId changes
 
     useEffect(() => {
@@ -146,23 +184,6 @@ const EventPage: React.FC = () => {
                     <div className="col-md-7 col-lg-4 mb-5 mb-lg-0 wow fadeIn">
                         <div className="card border-0 shadow">
                             <img src={imageURL?.PresignedURL} alt="..." />
-                            <div className="card-body p-1-9 p-xl-5">
-                                <div className="mb-4">
-                                    <h3 className="h4 mb-0">Dakota Johnston</h3>
-                                    <span className="text-primary">CEO &amp; Founder</span>
-                                </div>
-                                <ul className="list-unstyled mb-4">
-                                    <li className="mb-3"><a href="#!"><i className="far fa-envelope display-25 me-3 text-secondary"></i>dakota@gmail.com</a></li>
-                                    <li className="mb-3"><a href="#!"><i className="fas fa-mobile-alt display-25 me-3 text-secondary"></i>+012 (345) 6789</a></li>
-                                    <li><a href="#!"><i className="fas fa-map-marker-alt display-25 me-3 text-secondary"></i>205 Main Street, USA</a></li>
-                                </ul>
-                                <ul className="social-icon-style2 ps-0">
-                                    <li><a href="#!" className="rounded-3"><i className="fab fa-facebook-f"></i></a></li>
-                                    <li><a href="#!" className="rounded-3"><i className="fab fa-twitter"></i></a></li>
-                                    <li><a href="#!" className="rounded-3"><i className="fab fa-youtube"></i></a></li>
-                                    <li><a href="#!" className="rounded-3"><i className="fab fa-linkedin-in"></i></a></li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
                     <div className="col-lg-8">
@@ -172,91 +193,71 @@ const EventPage: React.FC = () => {
                                     <h2 className="h1 mb-0 text-primary">{ eventDetails?.Name }</h2>
                                 </div>
                                 <p>This is a really really fun triathlon!</p>
-                                <p className="mb-0">There are many variations of passages of Lorem Ipsum available...</p>
                             </div>
                             <div className="mb-5 wow fadeIn">
                                 <div className="text-start mb-1-6 wow fadeIn">
-                                    <h2 className="mb-0 text-primary">Stats</h2>
+                                    <h2 className="mb-0 text-primary">Event Details</h2>
                                 </div>
-                                <div className="row mt-n4">
-                                    <div className="col-sm-6 col-xl-4 mt-4">
-                                        <div className="card text-center border-0 rounded-3">
-                                            <div className="card-body">
-                                                <i className="ti-bookmark-alt icon-box medium rounded-3 mb-4"></i>
-                                                <h3 className="h5 mb-3">Distances</h3>
-                                                <p className="mb-0">University of defgtion...</p>
+                                {Array.isArray(discDetailsList) && discDetailsList.length > 0 ? (
+                                    <div className="row mt-n4">
+                                        <div className="col-sm-6 col-xl-4 mt-4">
+                                            <div className="card rounded-3">
+                                                <div className="card-body">
+                                                    <i className="ti-bookmark-alt icon-box medium rounded-3 mb-4"></i>
+                                                    <h3 className="h5 mb-3">Distances</h3>
+                                                    {Object.keys(groupedByCategory).map((category) => (
+                                                        <div key={category}>
+                                                        {/* Render category name */}
+                                                        <h4 className="h5 mb-3">{category}</h4>
+                                                        <ul>
+                                                            {groupedByCategory[category].map((discipline, index) => (
+                                                            <li key={index}>
+                                                                <p className="mb-0">
+                                                                {discipline.TotalDistance} {discipline.Metric} {discipline.DisciplineName}
+                                                                </p>
+                                                            </li>
+                                                            ))}
+                                                        </ul>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-sm-6 col-xl-4 mt-4">
+                                            <div className="card rounded-3">
+                                                <div className="card-body">
+                                                    <i className="ti-pencil-alt icon-box medium rounded-3 mb-4"></i>
+                                                    <h3 className="h5 mb-3">Location</h3>
+                                                    <p className="mb-0">{eventDetails?.Street},</p>
+                                                    <p className="mb-0">{eventDetails?.City},</p>
+                                                    <p className="mb-0">{eventDetails?.County},</p>
+                                                    <p className="mb-0">{eventDetails?.PostCode}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-sm-6 col-xl-4 mt-4">
+                                            <div className="card rounded-3">
+                                                <div className="card-body">
+                                                    <i className="ti-medall-alt icon-box medium rounded-3 mb-4"></i>
+                                                    <h3 className="h5 mb-3">Event Date</h3>
+                                                    <p className="mb-0">{eventDetails?.EventDate.toLocaleDateString()}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="col-sm-6 col-xl-4 mt-4">
-                                        <div className="card text-center border-0 rounded-3">
-                                            <div className="card-body">
-                                                <i className="ti-pencil-alt icon-box medium rounded-3 mb-4"></i>
-                                                <h3 className="h5 mb-3">Location</h3>
-                                                <p className="mb-0">After complete engineer join HU Signage Ltd...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-sm-6 col-xl-4 mt-4">
-                                        <div className="card text-center border-0 rounded-3">
-                                            <div className="card-body">
-                                                <i className="ti-medall-alt icon-box medium rounded-3 mb-4"></i>
-                                                <h3 className="h5 mb-3">Date</h3>
-                                                <p className="mb-0">About 20 years of experience...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="wow fadeIn">
-                                <div className="text-start mb-1-6 wow fadeIn">
-                                    <h2 className="mb-0 text-primary">#Skills &amp; Experience</h2>
-                                </div>
-                                <p className="mb-4">Many desktop publishing packages and web page editors...</p>
-                                <div className="progress-style1">
-                                    <div className="progress-text">
-                                        <div className="row">
-                                            <div className="col-6 fw-bold">Wind Turbines</div>
-                                            <div className="col-6 text-end">70%</div>
-                                        </div>
-                                    </div>
-                                    <div className="custom-progress progress rounded-3 mb-4">
-                                        <div className="animated custom-bar progress-bar slideInLeft" style={{ width: '70%' }} aria-valuemax={100} aria-valuemin={0} aria-valuenow={70} role="progressbar"></div>
-                                    </div>
-                                    <div className="progress-text">
-                                        <div className="row">
-                                            <div className="col-6 fw-bold">Solar Panels</div>
-                                            <div className="col-6 text-end">90%</div>
-                                        </div>
-                                    </div>
-                                    <div className="custom-progress progress rounded-3 mb-4">
-                                        <div className="animated custom-bar progress-bar bg-secondary slideInLeft" style={{ width: '90%' }} aria-valuemax={100} aria-valuemin={0} aria-valuenow={90} role="progressbar"></div>
-                                    </div>
-                                    <div className="progress-text">
-                                        <div className="row">
-                                            <div className="col-6 fw-bold">Hybrid Energy</div>
-                                            <div className="col-6 text-end">80%</div>
-                                        </div>
-                                    </div>
-                                    <div className="custom-progress progress rounded-3">
-                                        <div className="animated custom-bar progress-bar bg-dark slideInLeft" style={{ width: '80%' }} aria-valuemax={100} aria-valuemin={0} aria-valuenow={80} role="progressbar"></div>
-                                    </div>
-                                </div>
+                                ) : (
+                                    <p></p>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
                 <div>
                     {Array.isArray(eventGPXDataList) && eventGPXDataList.length > 0 ? (
-                        eventGPXDataList.map((gpxItem, index) => {
-                            console.log('Rendering GPX Item:', gpxItem); // Debug log
-                            return (
-                                <div key={index}>
-                                    <h2>{formatFileName(gpxItem.Key)}</h2> {/* Title as the event key */}
-                                    <MapboxMap gpxData={gpxItem.GPX} />
-                                </div>
-                            );
-                        })
+                    <div>
+                        <h2>Course Map</h2> {/* Title as the event key */}
+                        <MapboxMap gpxDataList={eventGPXDataList} />
+                    </div>
                     ) : (
                         <p></p>
                     )}

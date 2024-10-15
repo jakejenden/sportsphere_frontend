@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './MapboxMap.css'
@@ -6,12 +6,70 @@ import './MapboxMap.css'
 mapboxgl.accessToken = 'pk.eyJ1IjoiamFrZWplbmRlbiIsImEiOiJjbTFpMm5mOHcwaWo0MmpzaXBkZ2s2eWMzIn0.GV26kFhLYpyeTc_xNh6Stw';
 
 interface MapboxMapProps {
-  gpxData: string; // GPX data in string format
+  gpxDataList: GPXData[]; // GPX data in string format
 }
 
-const MapboxMap: React.FC<MapboxMapProps> = ({ gpxData }) => {
+interface GPXData {
+  Key: string;
+  GPX: string; // GPX data in string format (can be base64 encoded)
+}
+
+interface LegendProps {
+  gpxDataList: GPXData[];
+  routeColors: string[];
+  toggleRouteVisibility: (index: number) => void;
+  visibleRoutes: boolean[]; // Tracks the visibility of each route
+}
+
+function formatFileName(fileName: string): string {
+  // Remove the file extension using regex
+  const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
+
+  // Replace underscores with spaces
+  const formattedName = nameWithoutExtension.replace(/_/g, " ");
+
+  return formattedName;
+}
+
+const Legend: React.FC<LegendProps> = ({ gpxDataList, routeColors, toggleRouteVisibility, visibleRoutes }) => {
+  return (
+    <div className="legend">
+      <h4>Legend (Click to Toggle Routes)</h4>
+      <ul>
+        {gpxDataList.map((gpxData, index) => (
+          <li
+            key={gpxData.Key}
+            onClick={() => toggleRouteVisibility(index)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              opacity: visibleRoutes[index] ? 1 : 0.5, // Dim the item if hidden
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: '20px',
+                height: '20px',
+                backgroundColor: routeColors[index % routeColors.length],
+                marginRight: '10px',
+              }}
+            />
+            {gpxData.Key}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<mapboxgl.Map | null>(null);
+  const [routeColors, setRouteColors] = useState<string[]>([]);
+  const [visibleRoutes, setVisibleRoutes] = useState<boolean[]>([]);
+  const map = useRef<mapboxgl.Map | null>(null);
 
   useEffect(() => {
     if (!mapInstance.current && mapContainerRef.current) {
@@ -27,65 +85,81 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxData }) => {
 
     const map = mapInstance.current;
 
-    if (gpxData) {
-      const decodedGPX = atob(gpxData);
-      console.log('Decoded GPX:', decodedGPX);
-      let gpxParser = require('gpxparser');
+    if (gpxDataList) {
+      let allCoordinates: [number, number][] = [];
+      const colors = ['#FF0000', '#0000FF', '#FF00FF'];
+      setRouteColors(colors);
+      setVisibleRoutes(new Array(gpxDataList.length).fill(true));
 
-      // Parse GPX data to GeoJSON (make sure you use the correct function)
-      var gpx = new gpxParser();
-      gpx.parse(decodedGPX);
-      const geojson = gpx.toGeoJSON(); // Ensure this is correct
+      map?.on('load', () => {
+        gpxDataList.forEach((GPXData, index) => {
+          const decodedGPX = atob(GPXData.GPX);
+          let gpxParser = require('gpxparser');
+          var gpx = new gpxParser();
+          gpx.parse(decodedGPX);
+          const geojson = gpx.toGeoJSON();
 
-      if (geojson && geojson.features && geojson.features.length > 0) {
-        console.log('Parsed GeoJSON:', geojson);
+          if (geojson && geojson.features && geojson.features.length > 0) {
+            const gpxRoute = 'gpxRoute' + String(index);
+            const gpxRouteLine = 'gpxRouteLine' + String(index);
 
-        map?.on('load', () => {  // Use optional chaining here
-          map.addSource('gpxRoute', {
-            type: 'geojson',
-            data: geojson,
-          });
+            if (!map.getSource(gpxRoute)) { // Check if the source already exists
+              map.addSource(gpxRoute, {
+                type: 'geojson',
+                data: geojson,
+              });
+            }
 
-          map.addLayer({
-            id: 'gpxRouteLine',
-            type: 'line',
-            source: 'gpxRoute',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-            },
-            paint: {
-              'line-color': '#FF0000',
-              'line-width': 4,
-            },
-          });
+            if (!map.getLayer(gpxRouteLine)) { // Check if the layer already exists
+              map.addLayer({
+                id: gpxRouteLine,
+                type: 'line',
+                source: gpxRoute,
+                layout: {
+                  'line-join': 'round',
+                  'line-cap': 'round',
+                },
+                paint: {
+                  'line-color': colors[index % colors.length],
+                  'line-width': 4,
+                },
+              });
+            }
 
-          // add the digital elevation model tiles
-          map.addSource('mapbox-dem', {
-            type: 'raster-dem',
-            url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-            tileSize: 512,
-            maxzoom: 20
-          });
-          map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1 });
+            // Add digital elevation model tiles for the first file only
+            if (index === 1 && !map.getSource('mapbox-dem')) {
+              map.addSource('mapbox-dem', {
+                type: 'raster-dem',
+                url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                tileSize: 512,
+                maxzoom: 20,
+              });
+              map.setTerrain({ source: 'mapbox-dem', exaggeration: 1 });
+            }
 
-          const coordinates = geojson.features[0].geometry.coordinates;
-          console.log('Coordinates for fitBounds:', coordinates); // Log coordinates
+            const coordinates = geojson.features[0].geometry.coordinates;
 
-          // Fit map to GPX route bounds
-          if (Array.isArray(coordinates) && coordinates.length > 0) {
-            const bounds = coordinates.reduce((bounds: any, coord: any) => {
-              return bounds.extend(coord);
-            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
-
-            map.fitBounds(bounds, { padding: 20 });
+            if (Array.isArray(coordinates) && coordinates.length > 0) {
+              allCoordinates = [...allCoordinates, ...coordinates]; // Merge all coordinates
+            } else {
+              console.error('No valid coordinates found in GPX file:', GPXData.Key);
+            }
           } else {
-            console.error('No valid coordinates found for fitting bounds:', coordinates);
+            console.error('Invalid GeoJSON structure or empty features:', geojson);
           }
         });
-      } else {
-        console.error('Invalid GeoJSON structure or empty features:', geojson);
-      }
+
+        // Fit the map to the bounds after processing all GPX files
+        if (allCoordinates.length > 0) {
+          const bounds = allCoordinates.reduce((bounds, coord) => {
+            return bounds.extend(coord); // Extend bounds with each coordinate
+          }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
+
+          map.fitBounds(bounds, { padding: 20 });
+        } else {
+          console.error('No valid coordinates found for fitting bounds:', allCoordinates);
+        }
+      });
     }
 
     return () => {
@@ -95,12 +169,37 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxData }) => {
         mapInstance.current = null; // Clear reference to allow re-initialization
       }
     };
-  }, [gpxData]);
+  }, [gpxDataList]);
 
+  const toggleRouteVisibility = (index: number) => {
+    if (!map.current) return; // Access the map through `map.current`
+
+    const updatedVisibility = [...visibleRoutes];
+    updatedVisibility[index] = !updatedVisibility[index]; // Toggle visibility in state
+    setVisibleRoutes(updatedVisibility);
+
+    const routeLineId = 'gpxRouteLine' + String(index);
+
+    if (map.current.getLayer(routeLineId)) { // Check if the layer exists
+      const currentVisibility = map.current.getLayoutProperty(routeLineId, 'visibility');
+
+      if (currentVisibility) {
+        map.current.setLayoutProperty(routeLineId, 'visibility', currentVisibility === 'visible' ? 'none' : 'visible');
+      }
+    } else {
+      console.error(`Layer ${routeLineId} not found.`);
+    }
+  };
 
   return <div className='map-container'>
-            <div ref={mapContainerRef} className='map' />;
-          </div>
+    <div ref={mapContainerRef} className='map' />
+    <Legend
+      gpxDataList={gpxDataList}
+      routeColors={routeColors}
+      toggleRouteVisibility={toggleRouteVisibility}
+      visibleRoutes={visibleRoutes}
+    />
+  </div>
 };
 
 export default MapboxMap;
