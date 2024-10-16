@@ -26,6 +26,7 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.20.1",
     "react-scripts": "5.0.1",
+    "recharts": "^2.13.0",
     "save": "^2.9.0",
     "togeojson": "^0.16.0",
     "togpx": "^0.5.4",
