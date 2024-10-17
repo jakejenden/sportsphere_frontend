@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'; // Correct import
 import axios from 'axios';
 import './eventSearchPage.css';
 import { API_URL } from './config';
-import MapboxMap from "./MapboxMap";
-import './MapboxMap.css'
+import MapboxMap from "./components/MapboxMap";
+import './components/MapboxMap.css'
 
 interface GPXData {
     Key: string;
@@ -255,7 +255,6 @@ const EventPage: React.FC = () => {
                 <div>
                     {Array.isArray(eventGPXDataList) && eventGPXDataList.length > 0 ? (
                     <div>
-                        <h2>Course Map</h2> {/* Title as the event key */}
                         <MapboxMap gpxDataList={eventGPXDataList} />
                     </div>
                     ) : (

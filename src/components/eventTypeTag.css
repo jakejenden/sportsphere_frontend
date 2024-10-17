@@ -1,0 +1,27 @@
+.tag-box {
+padding: .5rem;
+display: inline-flex;
+white-space: nowrap;
+border-radius: 15px;
+}
+
+.tag-box .indicator {
+width: 13px;
+height: 13px;
+margin-right: .5rem;
+float: left;
+border-radius: 50%;
+}
+
+.tag-box span {
+font-size: 0.8125rem;
+color: #3c4142;
+font-weight: 600;
+}
+
+.triathlon-tag {
+    background-color: #e1f5f7;
+}
+.run-tag {
+    background-color: #fff4e1;
+}

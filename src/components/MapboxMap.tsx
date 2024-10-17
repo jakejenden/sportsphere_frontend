@@ -52,7 +52,7 @@ const ElevationGraph: React.FC<ElevationGraphProps> = ({ elevationPoints, graphT
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={elevationPoints}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="distance" label={{ value: 'Distance (km)', position: 'insideBottomRight', offset: 0 }} interval={100} />
+          <XAxis dataKey="distance" label={{ value: 'Distance (km)', position: 'insideBottomRight', offset: 0 }} interval={200} />
           <YAxis label={{ value: 'Elevation (m)', angle: -90, position: 'insideLeft' }} />
           <Tooltip />
           <Line type="monotone" dataKey="elevation" stroke={ routeColor } activeDot={{ r: 8 }} />
@@ -296,24 +296,28 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
   };
 
   return <div className='map-container'>
-    <div ref={mapContainerRef} className='map' />
-    <Legend
-      gpxDataList={gpxDataList}
-      routeColors={routeColors}
-      toggleRouteVisibility={toggleRouteVisibility}
-      visibleRoutes={visibleRoutes}
-    />
-    {elevationPoints.map((points, index) => (
-      <div>
-        <ElevationGraph
-          elevationPoints={points}
-          graphTitle={ graphTitle[index] }
-          routeColor={ routeColors[index] }
-          elevationGain={ elevationGain[index] }
-        />
-      </div>
-    ))}
-  </div>
+          <h2>Course Map</h2>
+          <div className='map-wrapper'>
+            <div ref={mapContainerRef} className='map' />
+            <Legend
+              gpxDataList={gpxDataList}
+              routeColors={routeColors}
+              toggleRouteVisibility={toggleRouteVisibility}
+              visibleRoutes={visibleRoutes}
+            />
+          </div>
+          <div className='graphs-wrapper'>
+            {elevationPoints.map((points, index) => (
+              <ElevationGraph
+                key={index}
+                elevationPoints={points}
+                graphTitle={graphTitle[index]}
+                routeColor={routeColors[index]}
+                elevationGain={elevationGain[index]}
+              />
+            ))}
+          </div>
+        </div>
 };
 
 export default MapboxMap;

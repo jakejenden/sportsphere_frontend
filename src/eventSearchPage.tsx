@@ -7,6 +7,7 @@ import './eventSearchPage.css';
 import './eventSearchCarousel.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Includes Popper.js
 import 'bootstrap/dist/css/bootstrap.min.css'; // Bootstrap CSS
+import EventTypeTag from './components/eventTypeTag';
 
 
 interface EventResult {
@@ -461,7 +462,11 @@ const EventSearchPage: React.FC = () => {
                                       <td>
                                         <div className="widget-26-job-title">
                                           <button onClick={() => handleRedirect(result.Id)}>{result.Name}</button>
-                                          <p className="m-0">{result.EventDate.toLocaleDateString()}</p>
+                                          <p className="m-0">{result.EventDate.toLocaleDateString('en-GB', {
+                                                                                                              day: '2-digit',
+                                                                                                              month: '2-digit',
+                                                                                                              year: 'numeric',
+                                                                                                            })}</p>
                                         </div>
                                       </td>
                                       <td>
@@ -473,10 +478,7 @@ const EventSearchPage: React.FC = () => {
                                         <div className="widget-26-job-salary">{result.EventOrganiser}</div>
                                       </td>
                                       <td>
-                                        <div className="widget-26-job-category bg-soft-base">
-                                          <i className="indicator bg-base"></i>
-                                          <span>{result.EventType}</span>
-                                        </div>
+                                        <EventTypeTag eventType={ result.EventType }/>
                                       </td>
                                       <td>
                                         <div className="widget-26-job-starred">
@@ -516,7 +518,11 @@ const EventSearchPage: React.FC = () => {
                                   <button onClick={() => handleRedirect(result.Id)}>
                                     {result.Name}
                                   </button>
-                                  <p>{result.EventDate.toLocaleDateString()}</p>
+                                  <p>{result.EventDate.toLocaleDateString('en-GB', {
+                                                                                      day: '2-digit',
+                                                                                      month: '2-digit',
+                                                                                      year: 'numeric',
+                                                                                    })}</p>
                                   <p>{result.City}</p>
                                   <p>{result.EventOrganiser}</p>
                                   <p>{result.EventType}</p>
