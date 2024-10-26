@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { API_URL } from './config';
 import './createUser.css'; // Import the custom CSS file for styling
 import { validateEmail } from './validation/validateEmail';
@@ -11,25 +11,16 @@ interface FormData {
   email: string;
 }
 
-interface Errors {
-  email?: string;
-}
-
 const ForgotPassword: React.FC = () => {
   const apiForgotPasswordURL = `${API_URL}/forgotpassword`
   const navigate = useNavigate(); // Access the history object
   const [formData, setFormData] = useState<FormData>({
     email: '',
   });
-
-  const [errors, setErrors] = useState<Errors>({});
+  const [message, setMessage] = useState('');
 
   const validateForm = () => {
     const emailError = validateEmail(formData.email, true);
-
-    setErrors({
-      email: emailError,
-    });
 
     return !emailError;
   };
@@ -44,11 +35,24 @@ const ForgotPassword: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const usernameEmailUniqueResponse = await axios.post(apiForgotPasswordURL, { email: formData.email }, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    if (validateForm()) {
+      try {
+        const _ = await axios.post(apiForgotPasswordURL, { email: formData.email }, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        // console.log(forgotPasswordResponse.data);
+        setMessage('An email will be sent to your email address if it exists');
+      } catch (error) {
+        // console.error('error sending forgot password email for this user', error);
+        setMessage('An email will be sent to your email address if it exists');
+      }
+    }  else {
+      console.log('Email form is invalid. Fix errors.');
+      setMessage('The email format provided is invalid')
+    }
   };
 
   const handleLoginRedirect = () => {
@@ -103,7 +107,7 @@ const ForgotPassword: React.FC = () => {
             className="col-12"
             style={{ fontSize: '14px', paddingRight: '30px' }}
           />
-          {errors.email && <span style={{ color: 'red' }}>{errors.email}</span>}
+          {message && <span style={{color: 'green'}}>{message}</span>}
         </div>
 
         <button

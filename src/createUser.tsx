@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { API_URL } from './config';
 import './createUser.css'; // Import the custom CSS file for styling
 import { validateEmail } from './validation/validateEmail';
@@ -15,6 +16,7 @@ interface FormData {
   password: string;
   email: string;
   postcode: string;
+  recaptchaToken: string;
 }
 
 interface UsernameEmailUniqueResponse {
@@ -38,10 +40,13 @@ const CreateUser: React.FC = () => {
     password: '',
     email: '',
     postcode: '',
+    recaptchaToken: '',
   });
 
   const [retypePassword, setRetypePassword] = useState('');
   const [errors, setErrors] = useState<Errors>({});
+
+  const [recaptchaToken, setRecaptchaToken] = useState<string>('');
 
   const validateForm = (isEmailUnique: boolean, isUsernameUnique: boolean) => {
     const emailError = validateEmail(formData.email, isEmailUnique);
@@ -70,6 +75,15 @@ const CreateUser: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (recaptchaToken.length === 0) {
+      alert('Please complete the reCAPTCHA');
+      return;
+    }
+
+    formData.recaptchaToken = recaptchaToken;
+
+    setRecaptchaToken('');
 
     const usernameEmailUniqueResponse = await axios.post<UsernameEmailUniqueResponse>(apiCheckUsernameEmailUnique, { email: formData.email, username: formData.username }, {
       headers: {
@@ -106,6 +120,12 @@ const CreateUser: React.FC = () => {
 
   const handleLoginRedirect = () => {
     navigate('/login');
+  };
+
+  const handleRecaptchaChange = (token: string | null) => {
+    if (token !== null) {
+      setRecaptchaToken(token);
+    }
   };
 
   return (
@@ -232,6 +252,11 @@ const CreateUser: React.FC = () => {
           />
           {errors.postcode && <span style={{ color: 'red' }}>{errors.postcode}</span>}
         </div>
+
+        <ReCAPTCHA
+          sitekey="6Lcjp2wqAAAAAKotkFYe_qMV0UKWRjGjkNRKvDR6"
+          onChange={handleRecaptchaChange}
+        />
 
         <button
           type="submit"

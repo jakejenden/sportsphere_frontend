@@ -319,3 +319,47 @@ color: #3c4142;
 .tile-item p {
   margin: 8px 0;
 }
+
+.suggestions-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestion-item {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background-color: #f0f0f0;
+}
+
+/* Ensure the dropdown is positioned below the input */
+.dropdown-content {
+  position: absolute;
+  top: 100%; /* Start right below the input */
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Increase z-index so it stays above the button */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* On small screens, adjust layout so button doesn't overlap the dropdown */
+@media (max-width: 768px) {
+  .search-button-wrapper {
+    margin-top: 10px; /* Add margin to push the button below the dropdown */
+  }
+
+  .dropdown-content {
+    position: absolute;
+    top: 100%; /* Ensure dropdown is still positioned below the input */
+    z-index: 1000; /* Ensure dropdown stays above all other elements */
+  }
+}

@@ -32,6 +32,7 @@ interface ElevationGraphProps {
   graphTitle: string;
   routeColor: string;
   elevationGain: number;
+  courseElevationRating: string;
 }
 
 function formatFileName(fileName: string): string {
@@ -44,11 +45,23 @@ function formatFileName(fileName: string): string {
   return formattedName;
 }
 
-const ElevationGraph: React.FC<ElevationGraphProps> = ({ elevationPoints, graphTitle, routeColor, elevationGain }) => {
+function rateCourseElevation(elevationGain: number, courseDistance: number): string {
+  if (elevationGain/courseDistance > 0.025) {
+    return "Steep"
+  } else if (elevationGain/courseDistance > 0.018) {
+    return "Hilly"
+  }
+  return "Flat"
+}
+
+const ElevationGraph: React.FC<ElevationGraphProps> = ({ elevationPoints, graphTitle, routeColor, elevationGain, courseElevationRating }) => {
   return (
     <div>
       <h3>{ formatFileName(graphTitle) }</h3>
-      <h6>Elevation Gain: { elevationGain } m</h6>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <h6 style={{ margin: 0 }}>Elevation Gain: {elevationGain} m</h6>
+          <h6 style={{ margin: 0 }}>Elevation Rating: {courseElevationRating}</h6>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={elevationPoints}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -103,6 +116,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
   const [elevationPoints, setElevationPoints] = useState<ElevationPoint[][]>([]);
   const [elevationGain, setElevationGain] = useState<number[]>([]);
   const [graphTitle, setGraphTitle] = useState<string[]>([]);
+  const [courseElevationRating, setCourseElevationRating] = useState<string[]>([]);
 
   useEffect(() => {
     if (!mapInstance.current && mapContainerRef.current) {
@@ -198,7 +212,9 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
               }
   
               setElevationGain((prevData) => [...prevData, parseFloat(totalElevationGain.toFixed(1))]);
+              setCourseElevationRating((prevData) => [...prevData, rateCourseElevation(totalElevationGain, totalDistance)]);
             }
+
 
             if (!map.getSource(gpxRoute)) { // Check if the source already exists
               map.addSource(gpxRoute, {
@@ -314,6 +330,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ gpxDataList }) => {
                 graphTitle={graphTitle[index]}
                 routeColor={routeColors[index]}
                 elevationGain={elevationGain[index]}
+                courseElevationRating={courseElevationRating[index]}
               />
             ))}
           </div>

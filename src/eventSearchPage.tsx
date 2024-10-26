@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom'; // Correct import
 import axios, { AxiosResponse } from 'axios';
 import { API_URL } from './config';
@@ -8,6 +7,7 @@ import './eventSearchCarousel.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Includes Popper.js
 import 'bootstrap/dist/css/bootstrap.min.css'; // Bootstrap CSS
 import EventTypeTag from './components/eventTypeTag';
+import SearchComponent from './components/SearchComponent';
 
 
 interface EventResult {
@@ -36,6 +36,11 @@ interface ApiResponse {
   message?: string;
 }
 
+interface EventSuggestion {
+  EventId: number;
+  EventName: string;
+}
+
 const EventSearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [eventResults, setEventResults] = useState<EventResult[]>([]);
@@ -50,6 +55,8 @@ const EventSearchPage: React.FC = () => {
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [itemsPerPage] = useState(10);
+  const [eventSuggestions, setEventSuggestions] = useState<EventSuggestion[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
   const navigate = useNavigate();
 
   // Calculate the index of the first and last item of the current page
@@ -332,54 +339,16 @@ const EventSearchPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-lg-12 card-margin">
-          <div className="card search-form">
-            <div className="card-body p-0">
-              <Form id="search-form" onSubmit={handleSearch}>
-                <div className="row">
-                  <div className="col-12">
-                    <div className="row no-gutters">
-                      <div className="col-lg-3 col-md-3 col-sm-12 p-0">
-                        <Form.Control
-                          as="select"
-                          className="form-control"
-                          id="searchMethod"
-                          value={searchMethod}
-                          onChange={(e) => setSearchMethod(e.target.value)}
-                        >
-                          <option value="name">Event Name</option>
-                          <option value="location">Location</option>
-                          <option value="organiser">Organiser</option>
-                        </Form.Control>
-                      </div>
-                      <div className="col-lg-8 col-md-6 col-sm-12 p-0">
-                        <Form.Control
-                          type="text"
-                          placeholder="Search..."
-                          className="form-control"
-                          id="search"
-                          name="search"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                      </div>
-                      <div className="col-lg-1 col-md-3 col-sm-12 p-0">
-                        <Button type="submit" className="btn btn-base">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-search">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                          </svg>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Form>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SearchComponent
+        handleSearch={handleSearch}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        searchMethod={searchMethod}
+        setSearchMethod={setSearchMethod}
+        eventSuggestions={eventSuggestions}
+        activeIndex={activeIndex}
+        setEventSuggestions={setEventSuggestions}
+      />
 
       {searchPerformed ? (
         <div className="row">
@@ -587,11 +556,9 @@ const EventSearchPage: React.FC = () => {
             <div className="col-sm-6 col-sm-offset-1">
               <div id="carousel-example-generic" className="carousel slide" data-ride="carousel">
                 {/* Indicators */}
-                <ol className="carousel-indicators">
+                <ol style={{ listStyleType: "none", padding: 0 }}>
                   {recommendedEventResults.map((_, index) => (
                     <li
-                      key={index}
-                      data-target="#carousel-example-generic"
                       data-slide-to={index}
                       className={index === currentCarouselIndex ? "active" : ""}
                       onClick={() => setCurrentCarouselIndex(index)}
@@ -619,7 +586,6 @@ const EventSearchPage: React.FC = () => {
                 {/* Controls */}
                 <a
                   className="left carousel-control"
-                  href="#carousel-example-generic"
                   role="button"
                   onClick={handlePrev}
                 >
@@ -628,7 +594,6 @@ const EventSearchPage: React.FC = () => {
                 </a>
                 <a
                   className="right carousel-control"
-                  href="#carousel-example-generic"
                   role="button"
                   onClick={handleNext}
                 >
@@ -644,7 +609,6 @@ const EventSearchPage: React.FC = () => {
                 {recommendedEventResults.map((event, index) => (
                   <p
                     key={event.Id}
-                    data-target="#carousel-example-generic"
                     data-slide-to={index}
                     className={index === currentCarouselIndex ? "active-p" : ""}
                     onClick={() => setCurrentCarouselIndex(index)}

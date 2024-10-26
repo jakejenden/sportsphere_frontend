@@ -2,6 +2,8 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+Need to install cross-env with the following command when the repo fresh: `npm install cross-env --save-dev`
+
 ## Available Scripts
 
 In the project directory, you can run:

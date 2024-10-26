@@ -18,6 +18,7 @@ const LoginPage: React.FC = () => {
     Username: '',
     Password: '',
   });
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -46,11 +47,11 @@ const LoginPage: React.FC = () => {
       // Redirect to the login page
       navigate('/return-results');
     } catch (error) {
-      const errorMessage = (error as Error).message;
+      const errMessage = (error as Error).message;
 
-      alert('Invalid username/email or password');
+      setErrorMessage('Invalid username/email or password');
       // Handle error, e.g., show an error message to the user
-      console.error('Login failed:', errorMessage);
+      console.error('Login failed:', errMessage);
     }
   };
 
@@ -79,6 +80,7 @@ const LoginPage: React.FC = () => {
             required
           />
         </Form.Group>
+        {errorMessage && <span style={{ color: 'red' }}>{errorMessage}</span>} <br/><br/>
 
         <Button variant="primary" type="submit">
           Login

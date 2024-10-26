@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from './config';
+import { validatePassword } from './validation/validatePassword';
 
 const ResetPasswordPage: React.FC = () => {
   const { token } = useParams<{ token: string }>(); // Extract token from URL
@@ -17,14 +18,9 @@ const ResetPasswordPage: React.FC = () => {
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic password validation
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    const errString = validatePassword(password, confirmPassword)
+    if (errString.length > 0) {
+      setError(errString);
       return;
     }
 
